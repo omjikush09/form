@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/index.ts"],
+  "sourcesContent": ["import express from \"express\";\n\nconst app = express();\n\napp.get(\"/\", (req, res) => {\n\tres.send(\"Hello d\");\n});\n\nconst PORT = process.env.PORT ?? \"3000\";\napp.listen(PORT, () => {\n\tconsole.log(`Server is starting to listen on ${PORT}`);\n});\n"],
+  "mappings": ";AAAA,OAAO,aAAa;AAEpB,IAAM,MAAM,QAAQ;AAEpB,IAAI,IAAI,KAAK,CAAC,KAAK,QAAQ;AAC1B,MAAI,KAAK,SAAS;AACnB,CAAC;AAED,IAAM,OAAO,QAAQ,IAAI,QAAQ;AACjC,IAAI,OAAO,MAAM,MAAM;AACtB,UAAQ,IAAI,mCAAmC,IAAI,EAAE;AACtD,CAAC;",
+  "names": []
+}

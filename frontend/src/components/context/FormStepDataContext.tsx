@@ -1,0 +1,275 @@
+"use client";
+import {
+	FormDefaultData,
+	FormElementTypes,
+	AddElementFromType,
+} from "@/config/data";
+import api from "@/util/axios";
+import { createContext, useState } from "react";
+import { toast } from "sonner";
+
+export type FormStepData = {
+	id?: string;
+	step: number;
+	type: FormElementTypes;
+	data?: any;
+	buttonText?: string;
+	[key: string]: any;
+};
+
+type ElementContextType = {
+	formStepData: FormStepData[];
+	addElements: (formId: string, type: AddElementFromType) => void;
+	setElements: (formId: string) => void;
+	changeFormData: (step: number, field: string, value: string) => void;
+	changeQuestionProperty: (step: number, property: string, value: any) => void;
+	changeFieldProperty: (
+		step: number,
+		fieldId: string,
+		property: string,
+		value: any
+	) => void;
+	removeStep: (step: number) => void;
+	reorderSteps: (activeStep: number, overStep: number) => void;
+	publishForm: (formId: string) => void;
+};
+
+export const FormStepContext = createContext<ElementContextType | null>(null);
+
+export default function ElementContextProvider({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
+	const [formStepData, setFormData] = useState<FormStepData[]>([]);
+
+	const addElements = (formId: string, type: AddElementFromType) => {
+		// body[step] = 2;
+		const exceptEnd = formStepData.filter((data) => data.type != "END_STEP");
+		let endStep = formStepData.find((data) => data.type == "END_STEP")!;
+		let body: FormStepData = {
+			...FormDefaultData[type],
+			step: endStep?.step,
+		};
+		endStep.step = endStep?.step + 1;
+		setFormData([...exceptEnd, body, endStep]);
+
+		try {
+			// const data = api.post();
+		} catch (error) {}
+	};
+
+	const setElements = async (formId: string) => {
+		try {
+			const data = await api.get(`/form/${formId}/questions`);
+			setFormData(data.data.data);
+		} catch (error) {
+			toast("Failed to load form data");
+		}
+	};
+	const changeFormData = (
+		step: number,
+		field: string,
+		value: string,
+		title?: string
+	) => {
+		const remaingData = formStepData.filter((data) => data.step != step);
+		const data = formStepData.find((data) => data.step == step);
+		if (data) {
+			data[field] = value;
+			console.log(remaingData);
+			console.log(data);
+			setFormData([...remaingData, data]);
+		}
+	};
+
+	const changeQuestionProperty = (
+		step: number,
+		property: string,
+		value: any
+	) => {
+		setFormData((prev) => {
+			const updated = [...prev];
+			const questionIndex = updated.findIndex((q) => q.step === step);
+
+			if (questionIndex >= 0) {
+				updated[questionIndex] = {
+					...updated[questionIndex],
+					[property]: value,
+				};
+			}
+
+			return updated;
+		});
+	};
+
+	const changeFieldProperty = (
+		step: number,
+		fieldId: string,
+		property: string,
+		value: any
+	) => {
+		setFormData((prev) => {
+			const updated = [...prev];
+			const questionIndex = updated.findIndex((q) => q.step === step);
+
+			if (questionIndex >= 0) {
+				const question = updated[questionIndex];
+
+				if (question.type === "CONTACT_INFO" && question.data?.fields) {
+					const updatedFields = question.data.fields.map((field: any) =>
+						field.id === fieldId ? { ...field, [property]: value } : field
+					);
+
+					updated[questionIndex] = {
+						...question,
+						data: {
+							...question.data,
+							fields: updatedFields,
+						},
+					};
+				}
+			}
+
+			return updated;
+		});
+	};
+
+	const removeStep = (step: number) => {
+		// Validation: Cannot remove first step (step 0) or last step (END_STEP)
+		const sortedSteps = formStepData.sort((a, b) => a.step - b.step);
+		const firstStep = sortedSteps[0];
+		const lastStep = sortedSteps[sortedSteps.length - 1];
+
+		// Prevent removal of first step
+		if (step === firstStep?.step) {
+			toast.error("Cannot remove the first step");
+			return;
+		}
+
+		// Prevent removal of last step (END_STEP)
+		if (
+			step === lastStep?.step ||
+			formStepData.find((s) => s.step === step)?.type === "END_STEP"
+		) {
+			toast.error("Cannot remove the last step");
+			return;
+		}
+
+		setFormData((prev) => {
+			// Remove the step
+			const withoutRemovedStep = prev.filter((s) => s.step !== step);
+
+			// Decrement step numbers for all steps that come after the removed step
+			const updatedSteps = withoutRemovedStep.map((s) => {
+				if (s.step > step) {
+					return {
+						...s,
+						step: s.step - 1,
+					};
+				}
+				return s;
+			});
+
+			return updatedSteps;
+		});
+
+		toast("Step removed successfully");
+	};
+
+	const reorderSteps = (activeStep: number, overStep: number) => {
+		if (activeStep === overStep) return;
+
+		setFormData((prev) => {
+			const activeStepData = prev.find((s) => s.step === activeStep);
+			const overStepData = prev.find((s) => s.step === overStep);
+
+			if (!activeStepData || !overStepData) return prev;
+
+			// Don't allow reordering START_STEP or END_STEP
+			if (
+				activeStepData.type === "START_STEP" ||
+				activeStepData.type === "END_STEP" ||
+				overStepData.type === "START_STEP" ||
+				overStepData.type === "END_STEP"
+			) {
+				toast.error("Cannot reorder START or END steps");
+				return prev;
+			}
+
+			// Sort current steps to get proper order
+			const sortedSteps = [...prev].sort((a, b) => a.step - b.step);
+
+			// Find indices in sorted array
+			const activeIndex = sortedSteps.findIndex((s) => s.step === activeStep);
+			const overIndex = sortedSteps.findIndex((s) => s.step === overStep);
+
+			// Create new array with reordered items
+			const reorderedSteps = [...sortedSteps];
+			const [movedStep] = reorderedSteps.splice(activeIndex, 1);
+			reorderedSteps.splice(overIndex, 0, movedStep);
+
+			// Reassign step numbers to maintain proper sequence
+			const updatedSteps = reorderedSteps.map((step, index) => ({
+				...step,
+				step: index,
+			}));
+
+			return updatedSteps;
+		});
+		toast("Steps reordered successfully");
+	};
+
+	const publishForm = async (formId: string) => {
+		try {
+			toast.info("Starting Publishing");
+			// Filter questions to only include visible fields for CONTACT_INFO types
+			const questionsToPublish = formStepData.map((question) => {
+				if (question.type === "CONTACT_INFO" && question.data?.fields) {
+					// Only include fields where display is true
+					const visibleFields = question.data.fields.filter(
+						(field: any) => field.display === true
+					);
+
+					return {
+						...question,
+						data: {
+							...question.data,
+							fields: visibleFields,
+						},
+					};
+				}
+
+				// For other question types, return as is
+				return question;
+			});
+
+			const response = await api.post(`form/${formId}/publish-with-questions`, {
+				questions: questionsToPublish,
+			});
+			console.log(response);
+			toast("Form Published");
+		} catch (error) {
+			console.error(error);
+			toast.error("Failed to publish form ");
+		}
+	};
+
+	return (
+		<FormStepContext.Provider
+			value={{
+				formStepData,
+				addElements,
+				setElements,
+				changeFormData,
+				changeQuestionProperty,
+				changeFieldProperty,
+				removeStep,
+				reorderSteps,
+				publishForm,
+			}}
+		>
+			{children}
+		</FormStepContext.Provider>
+	);
+}

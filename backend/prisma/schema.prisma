@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-kysely"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  forms Form[]
+}
+
+model Form {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String           @db.Uuid
+  title       String
+  settings    Json
+  status      Form_status      @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions   Form_Questions[]
+  responses   Form_Response[]
+
+  @@unique([userId, title])
+}
+
+model Form_Questions {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  form_id     String         @db.Uuid
+  type        QUESTION_TYPE
+  step        Int            @default(0)
+  required    Boolean        @default(false)
+  title       String
+  description String?
+  data        Json?
+  buttonText String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  from_answer Form_Answers[]
+  form        Form           @relation(fields: [form_id], references: [id], onDelete: Cascade)
+}
+
+model Form_Response {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  form_id      String         @db.Uuid
+  submittedAt  DateTime       @default(now())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  form_answers Form_Answers[]
+  forms        Form           @relation(fields: [form_id], references: [id], onDelete: Cascade)
+}
+
+model Form_Answers {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  form_response_id String         @db.Uuid
+  form_question_id String         @db.Uuid
+  answer           Json
+  form_questions   Form_Questions @relation(fields: [form_question_id], references: [id], onDelete: Cascade)
+  form_response    Form_Response  @relation(fields: [form_response_id], references: [id], onDelete: Cascade)
+}
+
+enum QUESTION_TYPE {
+  ADRESS
+  SHORT_TEXT
+  LONG_TEXT
+  PHONE_NUMBER
+  STATEMENT
+  SINGLE_SELECT_OPTION
+  MULTI_SELECT_OPTION
+  DROPDOWN
+  START_STEP
+  END_STEP
+  CONTACT_INFO
+}
+
+enum Form_status {
+  PUBLISHED
+  DRAFT
+  CLOSED
+}
