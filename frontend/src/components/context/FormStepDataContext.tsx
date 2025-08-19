@@ -7,6 +7,7 @@ import {
 import api from "@/util/axios";
 import { createContext, useState } from "react";
 import { toast } from "sonner";
+import { arrayMove } from "@dnd-kit/sortable";
 
 export type FormStepData = {
 	id?: string;
@@ -31,6 +32,10 @@ type ElementContextType = {
 	) => void;
 	removeStep: (step: number) => void;
 	reorderSteps: (activeStep: number, overStep: number) => void;
+	addOption: (step: number, option: { id: string; label: string; value: string }) => void;
+	updateOption: (step: number, optionId: string, property: string, value: string) => void;
+	removeOption: (step: number, optionId: string) => void;
+	reorderOptions: (step: number, activeId: string, overId: string) => void;
 	publishForm: (formId: string) => void;
 };
 
@@ -116,7 +121,7 @@ export default function ElementContextProvider({
 			if (questionIndex >= 0) {
 				const question = updated[questionIndex];
 
-				if (question.type === "CONTACT_INFO" && question.data?.fields) {
+				if ((question.type === "CONTACT_INFO" || question.type === "ADDRESS") && question.data?.fields) {
 					const updatedFields = question.data.fields.map((field: any) =>
 						field.id === fieldId ? { ...field, [property]: value } : field
 					);
@@ -220,12 +225,117 @@ export default function ElementContextProvider({
 		toast("Steps reordered successfully");
 	};
 
+	const addOption = (step: number, option: { id: string; label: string; value: string }) => {
+		setFormData((prev) => {
+			const updated = [...prev];
+			const questionIndex = updated.findIndex((q) => q.step === step);
+
+			if (questionIndex >= 0) {
+				const question = updated[questionIndex];
+				if ((question.type === "SINGLE_SELECT_OPTION" || question.type === "MULTI_SELECT_OPTION" || question.type === "DROPDOWN") && question.data?.options) {
+					updated[questionIndex] = {
+						...question,
+						data: {
+							...question.data,
+							options: [...question.data.options, option],
+						},
+					};
+				}
+			}
+
+			return updated;
+		});
+	};
+
+	const updateOption = (step: number, optionId: string, property: string, value: string) => {
+		setFormData((prev) => {
+			const updated = [...prev];
+			const questionIndex = updated.findIndex((q) => q.step === step);
+
+			if (questionIndex >= 0) {
+				const question = updated[questionIndex];
+				if ((question.type === "SINGLE_SELECT_OPTION" || question.type === "MULTI_SELECT_OPTION" || question.type === "DROPDOWN") && question.data?.options) {
+					const updatedOptions = question.data.options.map((option: any) =>
+						option.id === optionId ? { ...option, [property]: value } : option
+					);
+
+					updated[questionIndex] = {
+						...question,
+						data: {
+							...question.data,
+							options: updatedOptions,
+						},
+					};
+				}
+			}
+
+			return updated;
+		});
+	};
+
+	const removeOption = (step: number, optionId: string) => {
+		setFormData((prev) => {
+			const updated = [...prev];
+			const questionIndex = updated.findIndex((q) => q.step === step);
+
+			if (questionIndex >= 0) {
+				const question = updated[questionIndex];
+				if ((question.type === "SINGLE_SELECT_OPTION" || question.type === "MULTI_SELECT_OPTION" || question.type === "DROPDOWN") && question.data?.options) {
+					const updatedOptions = question.data.options.filter((option: any) => option.id !== optionId);
+
+					updated[questionIndex] = {
+						...question,
+						data: {
+							...question.data,
+							options: updatedOptions,
+						},
+					};
+				}
+			}
+
+			return updated;
+		});
+		toast("Option removed successfully");
+	};
+
+	const reorderOptions = (step: number, activeId: string, overId: string) => {
+		if (activeId === overId) return;
+
+		setFormData((prev) => {
+			const updated = [...prev];
+			const questionIndex = updated.findIndex((q) => q.step === step);
+
+			if (questionIndex >= 0) {
+				const question = updated[questionIndex];
+				if ((question.type === "SINGLE_SELECT_OPTION" || question.type === "MULTI_SELECT_OPTION" || question.type === "DROPDOWN") && question.data?.options) {
+					const options = [...question.data.options];
+					const activeIndex = options.findIndex((option: any) => option.id === activeId);
+					const overIndex = options.findIndex((option: any) => option.id === overId);
+
+					if (activeIndex !== -1 && overIndex !== -1) {
+						const reorderedOptions = arrayMove(options, activeIndex, overIndex);
+
+						updated[questionIndex] = {
+							...question,
+							data: {
+								...question.data,
+								options: reorderedOptions,
+							},
+						};
+					}
+				}
+			}
+
+			return updated;
+		});
+	};
+
 	const publishForm = async (formId: string) => {
 		try {
 			toast.info("Starting Publishing");
-			// Filter questions to only include visible fields for CONTACT_INFO types
+			// Filter questions to only include visible fields for CONTACT_INFO and ADDRESS types
 			const questionsToPublish = formStepData.map((question) => {
-				if (question.type === "CONTACT_INFO" && question.data?.fields) {
+				if ((question.type === "CONTACT_INFO" || question.type === "ADDRESS") && question.data?.fields) {
 					// Only include fields where display is true
 					const visibleFields = question.data.fields.filter(
 						(field: any) => field.display === true
@@ -266,6 +376,10 @@ export default function ElementContextProvider({
 				changeFieldProperty,
 				removeStep,
 				reorderSteps,
+				addOption,
+				updateOption,
+				removeOption,
+				reorderOptions,
 				publishForm,
 			}}
 		>

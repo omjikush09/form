@@ -27,9 +27,7 @@ import {
 	verticalListSortingStrategy,
 	useSortable,
 } from "@dnd-kit/sortable";
-import {
-	CSS,
-} from "@dnd-kit/utilities";
+import { CSS } from "@dnd-kit/utilities";
 
 // Sortable Step Item Component
 function SortableStepItem({
@@ -39,8 +37,8 @@ function SortableStepItem({
 	removeStep,
 }: {
 	data: FormStepData;
-	selectedQuestions: number | undefined;
-	setSelectedQuestions: Dispatch<SetStateAction<number | undefined>>;
+	selectedQuestions: number;
+	setSelectedQuestions: Dispatch<SetStateAction<number>>;
 	removeStep: (step: number) => void;
 }) {
 	const {
@@ -72,7 +70,9 @@ function SortableStepItem({
 				data.step == selectedQuestions
 					? " border-dashed border-1 border-black"
 					: ""
-			}rounded flex items-center gap-2 cursor-pointer ${isDragging ? 'z-50' : ''}`}
+			}rounded flex items-center gap-2 cursor-pointer ${
+				isDragging ? "z-50" : ""
+			}`}
 		>
 			{isDraggable && (
 				<div
@@ -116,8 +116,8 @@ function StepList({
 	selectedQuestions,
 	setSelectedQuestions,
 }: {
-	selectedQuestions: number | undefined;
-	setSelectedQuestions: Dispatch<SetStateAction<number | undefined>>;
+	selectedQuestions: number;
+	setSelectedQuestions: Dispatch<SetStateAction<number>>;
 }) {
 	const { formStepData, removeStep, reorderSteps } = useFormStepData();
 
@@ -137,12 +137,12 @@ function StepList({
 	}
 
 	// Create items array for SortableContext (only draggable steps)
-	const sortableItems = formStepData.map(data => data.step);
+	const sortableItems = formStepData.map((data) => data.step);
 
 	return (
 		<div className="bg-[#f2f4f7] p-2 pt-4 h-full">
 			<p className="text-gray-500 text-sm mb-2">Blocks</p>
-			
+
 			<DndContext
 				sensors={sensors}
 				collisionDetection={closestCenter}

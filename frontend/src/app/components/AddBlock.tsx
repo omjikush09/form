@@ -20,7 +20,7 @@ function AddBlock({ formId }: { formId: string }) {
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Are you absolutely sure?</DialogTitle>
+					<DialogTitle>Pick a block you want to add</DialogTitle>
 					<DialogDescription>
 						{formTypes.map((type) => {
 							return (
@@ -29,7 +29,7 @@ function AddBlock({ formId }: { formId: string }) {
 									onClick={() => {
 										addElements(formId, type);
 									}}
-									className={`cursor-pointer flex items-center gap-2 p-2 mb-2 ${ElementDefaultData[type]?.color}`}
+									className={`cursor-pointer flex text-black  items-center gap-2 p-2 mb-2 ${ElementDefaultData[type]?.color}`}
 								>
 									{ElementDefaultData[type]?.icon}
 									{type}

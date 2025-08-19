@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { ElementType } from "./FormElements";
 import { useFormStepData } from "@/hook/useFormData";
 import { useFormContext } from "@/components/context/FormContext";
+import QuestionProperties from "./QuestionProperties";
 
 const type: ElementType = "TextField";
 
@@ -19,7 +20,6 @@ function FormComponet({
 	return (
 		<div className="  ">
 			<div className="flex flex-col gap-2">
-				{/* {JSON.stringify(data)} */}
 				<h1
 					className="text-4xl"
 					style={{ color: formData.settings.questionColor }}
@@ -37,19 +37,19 @@ function FormComponet({
 function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	const { formStepData: formData, changeFormData } = useFormStepData();
 	const data = formData.find((data) => data.step == selectedStep);
+
 	return (
-		<>
-			<div>
-				<h1>Title</h1>
-				<input
-					className="border-2 border-solid rounded"
-					value={data?.title}
-					onChange={(e) =>
-						changeFormData(selectedStep, "title", e.target.value)
-					}
-				/>
-			</div>
-		</>
+		<div className="pt-5 px-2 bg-[#f2f4f7] h-full">
+			{/* Question Level Properties */}
+			<QuestionProperties
+				title={data?.title || ""}
+				description={data?.description || ""}
+				onTitleChange={(title) => changeFormData(selectedStep, "title", title)}
+				onDescriptionChange={(description) =>
+					changeFormData(selectedStep, "description", description)
+				}
+			/>
+		</div>
 	);
 }
 

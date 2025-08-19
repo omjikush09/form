@@ -24,7 +24,7 @@ function Build() {
 	const { formId } = params;
 	const { formData, loading, fetchFormData } = useFormContext();
 
-	const [selectedStep, setSelectedStep] = useState<number | undefined>(0);
+	const [selectedStep, setSelectedStep] = useState<number>(0);
 
 	const { setElements, formStepData, publishForm } = useFormStepData();
 
@@ -39,8 +39,8 @@ function Build() {
 
 	return (
 		<div className="flex flex-col h-full ">
-			{/* {JSON.stringify(stepData)}
-			{JSON.stringify(formData)} */}
+			{/* {JSON.stringify(stepData)} */}
+			{/* {JSON.stringify(formData)} */}
 			<div className="flex justify-between border-b-1 p-2">
 				<div className="flex justify-center items-center gap-4">
 					<IoMdArrowBack color="blue" size={40} />
@@ -101,7 +101,10 @@ function Build() {
 						</div>
 						<div
 							className={`flex-1 grid place-items-center  mb-2 `}
-							style={{ backgroundColor: formData.settings.backgroundColor }}
+							style={{
+								backgroundColor: formData.settings.backgroundColor,
+								fontFamily: `${formData.settings.fontFamily}, sans-serif`,
+							}}
 						>
 							{(() => {
 								if (selectedStep == undefined || !stepData?.type) return;
@@ -114,7 +117,7 @@ function Build() {
 					</div>
 					<div>
 						{(() => {
-							if (selectedStep == undefined || !stepData?.type) return;
+							if (!stepData?.type) return;
 							const Component = FormElement[stepData.type].properTiesComponent;
 							return <Component selectedStep={selectedStep} />;
 						})()}

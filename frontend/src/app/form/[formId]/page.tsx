@@ -4,6 +4,7 @@ import {
 	FormAnswer,
 	useFormAnswers,
 } from "@/components/context/FormAnswerContext";
+import { useFormContext } from "@/components/context/FormContext";
 import { FormStepData } from "@/components/context/FormStepDataContext";
 import { Button } from "@/components/ui/button";
 import { useFormStepData } from "@/hook/useFormData";
@@ -15,15 +16,10 @@ import { toast } from "sonner";
 function Form() {
 	const { formId } = useParams<{ formId: string }>();
 	const { formStepData, setElements } = useFormStepData();
+	const { formData, fetchFormData } = useFormContext();
 	const [currentStep, setCurrentStep] = useState(0);
-	const {
-		answers,
-		setAnswers,
-		submitAnswers,
-		isSubmitting,
-		validateQuestion,
-		canProceedToNext,
-	} = useFormAnswers();
+	const { setAnswers, submitAnswers, validateQuestion, canProceedToNext } =
+		useFormAnswers();
 
 	const getQuestions = async (formId: string) => {
 		try {
@@ -70,10 +66,40 @@ function Form() {
 		}
 	};
 
+	const handleButtonOnClick = async () => {
+		const currentStepData = formStepData.find(
+			(data) => data.step === currentStep
+		);
+
+		// Validate before submission if this is the last question step
+		if (currentStep == formStepData.length - 2) {
+			if (
+				currentStepData &&
+				!canProceedToNext(currentStepData.id!, currentStepData)
+			) {
+				const errors = validateQuestion(currentStepData.id!, currentStepData);
+				errors.forEach((error) => {
+					if (error.field === "general") {
+						toast.error(error.message);
+					} else {
+						toast.error(`${error.field}: ${error.message}`);
+					}
+				});
+				return;
+			}
+
+			console.log("Submitting");
+			const success = await submitAnswers(formId);
+			if (!success) return;
+		}
+		nextStep();
+	};
+
 	useEffect(() => {
 		if (formId) {
 			console.log(formId);
 			getQuestions(formId);
+			fetchFormData(formId);
 		}
 	}, [formId]);
 	useEffect(() => {
@@ -82,6 +108,16 @@ function Form() {
 		);
 		const ans: FormAnswer[] = filteredData.map((data) => {
 			if (data.type == "CONTACT_INFO") {
+				const answers: Record<string, { title: string; value: string }> = {};
+				data.data.fields.forEach(
+					(data: any) => (answers[data.id] = { value: "", title: data.title })
+				);
+				return {
+					questionId: data.id!,
+					answer: answers,
+				};
+			}
+			if (data.type == "ADDRESS") {
 				const answers: Record<string, { title: string; value: string }> = {};
 				data.data.fields.forEach(
 					(data: any) => (answers[data.id] = { value: "", title: data.title })
@@ -102,56 +138,28 @@ function Form() {
 	}, [currentStep]);
 	const stepData = formStepData.find((data) => data.step == currentStep);
 	return (
-		<div className=" grid place-items-center h-full w-full bg-red-300">
+		<div
+			className=" grid place-items-center h-full w-full"
+			style={{
+				backgroundColor: formData.settings.backgroundColor,
+				fontFamily: `${formData.settings.fontFamily}, sans-serif`,
+			}}
+		>
 			<div className="flex flex-col gap-2">
-				{/* {JSON.stringify(answers)}
-			
-				{JSON.stringify(formStepData)} */}
+				{/* {JSON.stringify(formData)} */}
+
+				{/* {JSON.stringify(formStepData)} */}
 				{(() => {
 					if (!stepData?.type) return;
 					const Component = FormElement[stepData.type].FormComponet;
-					return <Component selectedStep={currentStep} disabled={false} />;
+					return (
+						<Component
+							selectedStep={currentStep}
+							disabled={false}
+							buttonOnClink={handleButtonOnClick}
+						/>
+					);
 				})()}
-				{currentStep < formStepData.length - 1 && (
-					<Button
-						disabled={isSubmitting}
-						className="cursor-pointer"
-						onClick={async () => {
-							const currentStepData = formStepData.find(
-								(data) => data.step === currentStep
-							);
-
-							// Validate before submission if this is the last question step
-							if (currentStep == formStepData.length - 2) {
-								if (
-									currentStepData &&
-									!canProceedToNext(currentStepData.id!, currentStepData)
-								) {
-									const errors = validateQuestion(
-										currentStepData.id!,
-										currentStepData
-									);
-									errors.forEach((error) => {
-										if (error.field === "general") {
-											toast.error(error.message);
-										} else {
-											toast.error(`${error.field}: ${error.message}`);
-										}
-									});
-									return;
-								}
-
-								console.log("Submitting");
-								const success = await submitAnswers(formId);
-								if (!success) return;
-							}
-							nextStep();
-						}}
-					>
-						{" "}
-						{stepData?.buttonText || "Next"}{" "}
-					</Button>
-				)}
 			</div>
 		</div>
 	);

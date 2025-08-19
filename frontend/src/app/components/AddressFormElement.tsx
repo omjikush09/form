@@ -73,7 +73,7 @@ function FormComponet({
 											onChange={(e) =>
 												setAnswer(
 													formDataCurrent?.id!,
-													"CONTACT_INFO",
+													"ADDRESS",
 													e.target.value,
 													data.id
 												)

@@ -30,7 +30,10 @@ type FormAnswerContextType = {
 		id?: string
 	) => void;
 	getAnswer: (questionId: string) => FormAnswer | undefined;
-	validateQuestion: (questionId: string, questionData: any) => ValidationError[];
+	validateQuestion: (
+		questionId: string,
+		questionData: any
+	) => ValidationError[];
 	canProceedToNext: (questionId: string, questionData: any) => boolean;
 	clearAnswers: () => void;
 	submitAnswers: (formId: string) => Promise<boolean>;
@@ -68,7 +71,7 @@ export default function FormAnswerProvider({
 				questionId,
 				answer,
 			};
-			if (questionType == "CONTACT_INFO" && id != undefined) {
+			if ((questionType == "CONTACT_INFO" || questionType == "ADDRESS") && id != undefined) {
 				const updated = [...prev];
 				updated[existingIndex].answer[id].value = answer;
 				return updated;
@@ -99,55 +102,58 @@ export default function FormAnswerProvider({
 
 	const validatePhone = (phone: string): boolean => {
 		const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-		return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+		return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ""));
 	};
 
-	const validateQuestion = (questionId: string, questionData: any): ValidationError[] => {
+	const validateQuestion = (
+		questionId: string,
+		questionData: any
+	): ValidationError[] => {
 		const errors: ValidationError[] = [];
 		const answer = getAnswer(questionId);
 
 		if (!answer) {
 			if (questionData.required) {
-				errors.push({ field: 'general', message: 'This field is required' });
+				errors.push({ field: "general", message: "This field is required" });
 			}
 			return errors;
 		}
 
-		if (questionData.type === 'CONTACT_INFO') {
+		if (questionData.type === "CONTACT_INFO" || questionData.type === "ADDRESS") {
 			const contactAnswer = answer.answer;
 			const fields = questionData.data?.fields || [];
 
 			fields.forEach((field: any) => {
-				const value = contactAnswer?.[field.id]?.value || '';
+				const value = contactAnswer?.[field.id]?.value || "";
 
-				if (field.required && (!value || value.trim() === '')) {
-					errors.push({ 
-						field: field.id, 
-						message: `${field.title} is required` 
+				if (field.required && (!value || value.trim() === "")) {
+					errors.push({
+						field: field.id,
+						message: `${field.title} is required`,
 					});
 				}
 
-				if (value && field.type === 'email' && !validateEmail(value)) {
-					errors.push({ 
-						field: field.id, 
-						message: 'Please enter a valid email address' 
+				if (value && field.type === "email" && !validateEmail(value)) {
+					errors.push({
+						field: field.id,
+						message: "Please enter a valid email address",
 					});
 				}
 
-				if (value && field.type === 'number' && !validatePhone(value)) {
-					errors.push({ 
-						field: field.id, 
-						message: 'Please enter a valid phone number' 
+				if (value && field.type === "tel" && !validatePhone(value)) {
+					errors.push({
+						field: field.id,
+						message: "Please enter a valid phone number",
 					});
 				}
 			});
-		} else if (questionData.type === 'SHORT_TEXT' || questionData.type === 'LONG_TEXT') {
+		} else {
 			const value = answer.answer;
-			
-			if (questionData.required && (!value || value.trim() === '')) {
-				errors.push({ 
-					field: 'general', 
-					message: 'This field is required' 
+
+			if (questionData.required && (!value || value.trim() === "")) {
+				errors.push({
+					field: "general",
+					message: "This field is required",
 				});
 			}
 		}
