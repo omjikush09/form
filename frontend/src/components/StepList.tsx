@@ -10,7 +10,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Trash2, GripVertical } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
 	DndContext,
 	closestCenter,
@@ -58,31 +58,29 @@ function SortableStepItem({
 
 	const isDraggable = !(data.type === "START_STEP" || data.type === "END_STEP");
 
+	const handleClick = (e: React.MouseEvent) => {
+		// Only handle click if not dragging
+		if (!isDragging) {
+			setSelectedQuestions(data.step);
+		}
+	};
+
 	return (
 		<div
 			ref={setNodeRef}
 			style={style}
 			key={data.step}
-			onClick={() => {
-				setSelectedQuestions(data.step);
-			}}
+			onClick={handleClick}
+			{...(isDraggable ? attributes : {})}
+			{...(isDraggable ? listeners : {})}
 			className={`px-2 py-1.5 mb-2 ${ElementDefaultData[data.type]?.color} ${
 				data.step == selectedQuestions
 					? " border-dashed border-1 border-black"
 					: ""
-			}rounded flex items-center gap-2 cursor-pointer ${
+			}rounded flex items-center gap-2 cursor-pointer active:cursor-grabbing ${
 				isDragging ? "z-50" : ""
 			}`}
 		>
-			{isDraggable && (
-				<div
-					{...attributes}
-					{...listeners}
-					className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200/50 rounded"
-				>
-					<GripVertical className="w-4 h-4 text-gray-400" />
-				</div>
-			)}
 			{ElementDefaultData[data.type]?.icon}{" "}
 			<h1 className="truncate text-[12px]">{data.title}</h1>
 			{!(data.type == "START_STEP") && !(data.type == "END_STEP") && (
@@ -122,7 +120,11 @@ function StepList({
 	const { formStepData, removeStep, reorderSteps } = useFormStepData();
 
 	const sensors = useSensors(
-		useSensor(PointerSensor),
+		useSensor(PointerSensor, {
+			activationConstraint: {
+				distance: 8,
+			},
+		}),
 		useSensor(KeyboardSensor, {
 			coordinateGetter: sortableKeyboardCoordinates,
 		})
