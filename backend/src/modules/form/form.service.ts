@@ -1,6 +1,5 @@
-import { InsertQueryBuilder, sql } from "kysely";
+import { sql } from "kysely";
 import { db } from "../../db/index.js";
-import type { DB, Form } from "../../generated/prisma/types.js";
 
 export const createFormService = async (
 	userId: string,
@@ -97,50 +96,6 @@ export const deleteFormService = async (formId: string) => {
 	await db.deleteFrom("Form").where("id", "=", formId).execute();
 };
 
-export const publishFormService = async (formId: string) => {
-	const form = await db
-		.updateTable("Form")
-		.set({
-			status: "PUBLISHED",
-			publishedAt: new Date(),
-		})
-		.where("id", "=", formId)
-		.returningAll()
-		.executeTakeFirstOrThrow();
-
-	return form;
-};
-
-export const addQuestionToFormService = async (
-	formId: string,
-	question: {
-		type: string;
-		title: string;
-		description: any;
-		data: any;
-		step?: number;
-		required?: boolean;
-	}
-) => {
-	const formQuestion = await db
-		.insertInto("Form_Questions")
-		.values({
-			form_id: formId,
-			type: question.type as any,
-			title: question.title,
-			description: JSON.stringify(question.description),
-			data: JSON.stringify(question.data),
-			step: question.step || 0,
-			required: question.required || false,
-			updatedAt: sql`NOW()`,
-		})
-		.returningAll()
-		.executeTakeFirstOrThrow();
-	console.log(formQuestion);
-
-	return formQuestion;
-};
-
 export const getFormQuestionsService = async (formId: string) => {
 	const questions = await db
 		.selectFrom("Form_Questions")
@@ -150,74 +105,6 @@ export const getFormQuestionsService = async (formId: string) => {
 		.execute();
 
 	return questions;
-};
-
-export const upsertFormQuestionsService = async (
-	formId: string,
-	questions: Array<{
-		id?: string;
-		type: string;
-		title: string;
-		description: string;
-		data: any;
-		step: number;
-		required?: boolean;
-		buttonText?: string;
-	}>
-) => {
-	return await db.transaction().execute(async (trx) => {
-		const questionsToUpdate = questions.filter((q) => q.id);
-		const questionsToCreate = questions.filter((q) => !q.id);
-
-		const results = [];
-
-		if (questionsToUpdate.length > 0) {
-			const updatePromises = questionsToUpdate.map((question) =>
-				trx
-					.updateTable("Form_Questions")
-					.set({
-						title: question.title,
-						description: question.description,
-						data: JSON.stringify(question.data),
-						step: question.step,
-						required: question.required || false,
-						buttonText: question.buttonText,
-						updatedAt: sql`NOW()`,
-					})
-					.where("id", "=", question.id!)
-					.where("form_id", "=", formId)
-					.returningAll()
-					.execute()
-			);
-
-			const updateResults = await Promise.all(updatePromises);
-			results.push(...updateResults.flat());
-		}
-
-		if (questionsToCreate.length > 0) {
-			const createResults = await trx
-				.insertInto("Form_Questions")
-				.values(
-					questionsToCreate.map((question) => ({
-						form_id: formId,
-						type: question.type as any,
-						title: question.title,
-						description: question.description,
-						data: JSON.stringify(question.data),
-						step: question.step,
-						required: question.required || false,
-						buttonText: question.buttonText,
-						updatedAt: sql`NOW()`,
-					}))
-				)
-				.returningAll()
-				.execute();
-
-			results.push(...createResults);
-		}
-
-		return results;
-	});
 };
 
 export const publishFormWithQuestionsService = async (
@@ -260,7 +147,11 @@ export const publishFormWithQuestionsService = async (
 				await trx
 					.deleteFrom("Form_Questions")
 					.where("form_id", "=", formId)
-					.where("id", "in", questionsToDelete.map((q) => q.id))
+					.where(
+						"id",
+						"in",
+						questionsToDelete.map((q) => q.id)
+					)
 					.execute();
 			}
 
@@ -335,6 +226,7 @@ export const submitFormResponseService = async (
 	}>
 ) => {
 	return await db.transaction().execute(async (trx) => {
+		// Create the form response
 		const formResponse = await trx
 			.insertInto("Form_Response")
 			.values({
@@ -344,6 +236,7 @@ export const submitFormResponseService = async (
 			.returningAll()
 			.executeTakeFirstOrThrow();
 
+		// Save the answers if any provided
 		if (answers.length > 0) {
 			const answerValues = answers.map((answer) => ({
 				form_response_id: formResponse.id,
@@ -351,10 +244,7 @@ export const submitFormResponseService = async (
 				answer: JSON.stringify(answer.answer),
 			}));
 
-			await trx
-				.insertInto("Form_Answers")
-				.values(answerValues)
-				.execute();
+			await trx.insertInto("Form_Answers").values(answerValues).execute();
 		}
 
 		return formResponse;

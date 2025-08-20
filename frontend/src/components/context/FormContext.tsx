@@ -31,6 +31,7 @@ interface FormContextType {
 	formData: FormData;
 	loading: boolean;
 	saving: boolean;
+	error: string | null;
 	updateFormData: (updates: Partial<FormData>) => void;
 	updateSettings: (settings: Partial<FormSettings>) => void;
 	fetchFormData: (formId: string) => Promise<void>;
@@ -79,6 +80,7 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 	});
 	const [loading, setLoading] = useState(false);
 	const [saving, setSaving] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	const updateFormData = (updates: Partial<FormData>) => {
 		setFormData(prev => ({
@@ -101,6 +103,7 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 
 	const fetchFormData = async (formId: string) => {
 		setLoading(true);
+		setError(null);
 		try {
 			const response = await api.get(`/form/${formId}`);
 			const apiData = response.data.data;
@@ -119,6 +122,7 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 				updatedAt: apiData.updatedAt ? new Date(apiData.updatedAt) : new Date()
 			});
 		} catch (error) {
+			setError("Failed to load form data");
 			toast("Failed to fetch form");
 			console.error("Error fetching form:", error);
 		} finally {
@@ -165,6 +169,7 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 		formData,
 		loading,
 		saving,
+		error,
 		updateFormData,
 		updateSettings,
 		fetchFormData,

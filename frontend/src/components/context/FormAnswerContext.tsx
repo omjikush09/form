@@ -147,6 +147,116 @@ export default function FormAnswerProvider({
 					});
 				}
 			});
+		} else if (questionData.type === "MULTI_SELECT_OPTION") {
+			const selectedOptions = answer.answer || [];
+			const selectionType = questionData.data?.selectionType || "unlimited";
+			const minSelections = questionData.data?.minSelections || 0;
+			const maxSelections = questionData.data?.maxSelections || null;
+			const fixedSelections = questionData.data?.fixedSelections || null;
+
+			// Validate based on selection type
+			if (selectionType === "fixed" && fixedSelections) {
+				if (selectedOptions.length !== fixedSelections) {
+					errors.push({
+						field: "general",
+						message: `Please select exactly ${fixedSelections} option(s). Currently ${selectedOptions.length} selected.`,
+					});
+				}
+			} else if (selectionType === "range") {
+				if (selectedOptions.length < minSelections) {
+					errors.push({
+						field: "general",
+						message: `Please select at least ${minSelections} option(s). Currently ${selectedOptions.length} selected.`,
+					});
+				}
+				if (maxSelections && selectedOptions.length > maxSelections) {
+					errors.push({
+						field: "general",
+						message: `Please select no more than ${maxSelections} option(s). Currently ${selectedOptions.length} selected.`,
+					});
+				}
+			}
+
+			// Check required field (for any selection type)
+			if (questionData.required && selectedOptions.length === 0) {
+				errors.push({
+					field: "general",
+					message: "Please select at least one option",
+				});
+			}
+		} else if (questionData.type === "NUMBER") {
+			const value = answer.answer;
+			const numValue = parseFloat(value);
+			const minValue = questionData.data?.minValue;
+			const maxValue = questionData.data?.maxValue;
+
+			// Check if value is provided when required
+			if (questionData.required && (!value || value.trim() === "")) {
+				errors.push({
+					field: "general",
+					message: "This field is required",
+				});
+			}
+
+			// Validate numeric input and range if value is provided
+			if (value && value.trim() !== "") {
+				// Check if it's a valid number
+				if (isNaN(numValue)) {
+					errors.push({
+						field: "general",
+						message: "Please enter a valid number",
+					});
+				} else {
+					// Check minimum value
+					if (minValue !== undefined && numValue < minValue) {
+						errors.push({
+							field: "general",
+							message: `Value must be at least ${minValue}`,
+						});
+					}
+
+					// Check maximum value
+					if (maxValue !== undefined && numValue > maxValue) {
+						errors.push({
+							field: "general",
+							message: `Value must be no more than ${maxValue}`,
+						});
+					}
+				}
+			}
+		} else if (questionData.type === "LONG_TEXT") {
+			const value = answer.answer;
+			const minLength = questionData.data?.minLength;
+			const maxLength = questionData.data?.maxLength;
+
+			// Check if value is provided when required
+			if (questionData.required && (!value || value.trim() === "")) {
+				errors.push({
+					field: "general",
+					message: "This field is required",
+				});
+			}
+
+			// Validate length constraints if value is provided
+			if (value && value.trim() !== "") {
+				const textLength = value.length;
+
+				// Check minimum length
+				if (minLength !== undefined && textLength < minLength) {
+					errors.push({
+						field: "general",
+						message: `Text must be at least ${minLength} characters long. Currently ${textLength} characters.`,
+					});
+				}
+
+				// Check maximum length
+				if (maxLength !== undefined && textLength > maxLength) {
+					errors.push({
+						field: "general",
+						message: `Text must be no more than ${maxLength} characters long. Currently ${textLength} characters.`,
+					});
+				}
+			}
 		} else {
 			const value = answer.answer;
 

@@ -8,6 +8,13 @@ import { Plus, GripVertical } from "lucide-react";
 import QuestionProperties from "./QuestionProperties";
 import { Button } from "@/components/ui/button";
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import {
 	DndContext,
 	closestCenter,
 	KeyboardSensor,
@@ -115,12 +122,42 @@ function FormComponet({
 	// Handle multi-select checkbox changes
 	const handleCheckboxChange = (optionValue: string, checked: boolean) => {
 		const currentAnswers = answerData?.answer || [];
+		const selectionType = formDataCurrent?.data?.selectionType || "unlimited";
+		const minSelections = formDataCurrent?.data?.minSelections || 0;
+		const maxSelections = formDataCurrent?.data?.maxSelections || null;
+		const fixedSelections = formDataCurrent?.data?.fixedSelections || null;
 		let newAnswers;
 
 		if (checked) {
+			// Check limits based on selection type
+			if (
+				selectionType === "fixed" &&
+				fixedSelections &&
+				currentAnswers.length >= fixedSelections
+			) {
+				return; // Don't allow if fixed limit reached
+			}
+			if (
+				selectionType === "range" &&
+				maxSelections &&
+				currentAnswers.length >= maxSelections
+			) {
+				return; // Don't allow if max limit reached
+			}
 			// Add the option if checked
 			newAnswers = [...currentAnswers, optionValue];
 		} else {
+			// Check minimum when unchecking
+			if (
+				selectionType === "fixed" &&
+				fixedSelections &&
+				currentAnswers.length <= fixedSelections
+			) {
+				return; // Don't allow unchecking if it would go below fixed requirement
+			}
+			if (selectionType === "range" && currentAnswers.length <= minSelections) {
+				return; // Don't allow unchecking if it would go below minimum
+			}
 			// Remove the option if unchecked
 			newAnswers = currentAnswers.filter(
 				(value: string) => value !== optionValue
@@ -145,6 +182,35 @@ function FormComponet({
 				<div style={{ color: formData.settings.descriptionColor }}>
 					{formDataCurrent?.description}
 				</div>
+				{formDataCurrent?.data?.selectionType &&
+					formDataCurrent.data.selectionType !== "unlimited" && (
+						<div className="mt-2 text-sm text-gray-600">
+							{formDataCurrent.data.selectionType === "fixed" &&
+								formDataCurrent.data.fixedSelections && (
+									<>
+										Please select exactly {formDataCurrent.data.fixedSelections}{" "}
+										option(s)
+										{answerData?.answer?.length && (
+											<span className="ml-1">
+												({answerData.answer.length}/
+												{formDataCurrent.data.fixedSelections} selected)
+											</span>
+										)}
+									</>
+								)}
+							{formDataCurrent.data.selectionType === "range" && (
+								<>
+									Select {formDataCurrent.data.minSelections || 0} to{" "}
+									{formDataCurrent.data.maxSelections || "unlimited"} option(s)
+									{answerData?.answer?.length && (
+										<span className="ml-1">
+											({answerData.answer.length} selected)
+										</span>
+									)}
+								</>
+							)}
+						</div>
+					)}
 				<div className="mt-4 flex flex-col gap-3">
 					{formDataCurrent?.data &&
 						formDataCurrent.data.options.map((option: any) => (
@@ -246,7 +312,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 		data.data?.options?.map((option: any) => option.id) || [];
 
 	return (
-		<div className="pt-5 px-2 bg-[#f2f4f7] h-full">
+		<div className="pt-5 px-2 bg-[#f2f4f7] max-h-full overflow-y-auto">
 			{/* Question Level Properties */}
 			<QuestionProperties
 				title={data?.title || ""}
@@ -267,14 +333,16 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
 				/>
 			</div>
-			
+
 			<div className="flex items-center mb-3">
 				<div className="flex h-6 items-center">
 					<input
 						id="required-field"
 						type="checkbox"
 						checked={data?.required || false}
-						onChange={(e) => updateQuestionProperty("required", e.target.checked)}
+						onChange={(e) =>
+							updateQuestionProperty("required", e.target.checked)
+						}
 						className="h-4 w-4 rounded-sm border-gray-300 text-gray-600 focus:ring-gray-600 focus:outline-hidden focus:ring-0"
 					/>
 				</div>
@@ -286,7 +354,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 			</div>
 
 			{/* Options UI */}
-			<div className="">
+			<div className="  ">
 				{/* Header */}
 				<div className="flex items-center justify-between px-4 py-3">
 					<div className="flex items-center gap-2">
@@ -326,6 +394,98 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 					</DndContext>
 				</div>
 			</div>
+			{/* Selection Type Controls */}
+			<div className="mb-3">
+				<label className="block text-sm font-medium text-gray-700">
+					Selection Type
+				</label>
+				<Select
+					value={data?.data?.selectionType || "unlimited"}
+					onValueChange={(value) =>
+						updateQuestionProperty("data", {
+							...data?.data,
+							selectionType: value,
+							// Reset other values when changing type
+							minSelections: undefined,
+							maxSelections: undefined,
+							fixedSelections: undefined,
+						})
+					}
+				>
+					<SelectTrigger className="w-full">
+						<SelectValue placeholder="Select type" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="unlimited">Unlimited selections</SelectItem>
+						<SelectItem value="fixed">Fixed number of selections</SelectItem>
+						<SelectItem value="range">Min/Max range</SelectItem>
+					</SelectContent>
+				</Select>
+			</div>
+
+			{/* Fixed Selection Controls */}
+			{data?.data?.selectionType === "fixed" && (
+				<div className="mb-3">
+					<label className="block text-sm font-medium text-gray-700">
+						Number of selections required
+					</label>
+					<input
+						type="number"
+						min="1"
+						value={data?.data?.fixedSelections || ""}
+						onChange={(e) =>
+							updateQuestionProperty("data", {
+								...data?.data,
+								fixedSelections: parseInt(e.target.value) || 1,
+							})
+						}
+						className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
+						placeholder="e.g., 3"
+					/>
+				</div>
+			)}
+
+			{/* Range Selection Controls */}
+			{data?.data?.selectionType === "range" && (
+				<>
+					<div className="mb-3">
+						<label className="block text-sm font-medium text-gray-700">
+							Minimum selections
+						</label>
+						<input
+							type="number"
+							min="0"
+							value={data?.data?.minSelections || ""}
+							onChange={(e) =>
+								updateQuestionProperty("data", {
+									...data?.data,
+									minSelections: parseInt(e.target.value) || 0,
+								})
+							}
+							className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
+							placeholder="e.g., 1"
+						/>
+					</div>
+					<div className="mb-3">
+						<label className="block text-sm font-medium text-gray-700">
+							Maximum selections
+						</label>
+						<input
+							type="number"
+							min="1"
+							value={data?.data?.maxSelections || ""}
+							onChange={(e) =>
+								updateQuestionProperty("data", {
+									...data?.data,
+									maxSelections: parseInt(e.target.value) || null,
+								})
+							}
+							className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
+							placeholder="e.g., 5 (leave empty for no max)"
+						/>
+					</div>
+				</>
+			)}
 		</div>
 	);
 }

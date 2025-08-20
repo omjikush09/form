@@ -4,9 +4,16 @@ import { useFormStepData } from "@/hook/useFormData";
 import { useFormAnswers } from "@/components/context/FormAnswerContext";
 import { FiTrash2 } from "react-icons/fi";
 import { useFormContext } from "@/components/context/FormContext";
-import { ChevronDown, Plus, GripVertical } from "lucide-react";
+import { Plus, GripVertical } from "lucide-react";
 import QuestionProperties from "./QuestionProperties";
 import { Button } from "@/components/ui/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {
 	DndContext,
 	closestCenter,
@@ -128,38 +135,35 @@ function FormComponet({
 					{formDataCurrent?.description}
 				</div>
 				<div className="mt-4">
-					<div className="relative">
-						<select
-							disabled={disabled}
-							value={answerData?.answer || ""}
-							onChange={(e) =>
-								setAnswer(
-									formDataCurrent?.id!,
-									"DROPDOWN",
-									e.target.value
-								)
-							}
-							className="w-full p-3 pr-10 border-2 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+					<Select
+						disabled={disabled}
+						value={answerData?.answer || ""}
+						onValueChange={(value) =>
+							setAnswer(
+								formDataCurrent?.id!,
+								"DROPDOWN",
+								value
+							)
+						}
+					>
+						<SelectTrigger 
+							className="w-full p-3 border-2 rounded-md"
 							style={{
 								borderColor: formData.settings.answerColor,
 								color: formData.settings.answerColor,
 							}}
 						>
-							<option value="" disabled>
-								Choose an option...
-							</option>
+							<SelectValue placeholder="Choose an option..." />
+						</SelectTrigger>
+						<SelectContent>
 							{formDataCurrent?.data &&
 								formDataCurrent.data.options.map((option: any) => (
-									<option key={option.id} value={option.value}>
+									<SelectItem key={option.id} value={option.value}>
 										{option.label}
-									</option>
+									</SelectItem>
 								))}
-						</select>
-						<ChevronDown
-							className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none"
-							style={{ color: formData.settings.answerColor }}
-						/>
-					</div>
+						</SelectContent>
+					</Select>
 				</div>
 
 				<Button

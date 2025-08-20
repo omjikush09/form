@@ -1,6 +1,7 @@
 import React from "react";
 import {
 	Dialog,
+	DialogClose,
 	DialogContent,
 	DialogDescription,
 	DialogHeader,
@@ -9,6 +10,14 @@ import {
 } from "@/components/ui/dialog";
 import { IoColorPaletteOutline } from "react-icons/io5";
 import { useFormContext } from "@/components/context/FormContext";
+import { Button } from "@/components/ui/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 
 function FormDesign() {
 	const { formData, updateSettings, saveFormData, saving } = useFormContext();
@@ -202,28 +211,31 @@ function FormDesign() {
 						<label className="block text-sm font-medium text-gray-700 mb-2">
 							Font Family
 						</label>
-						<select
-							value={settings.fontFamily}
-							onChange={(e) => updateDesign("fontFamily", e.target.value)}
-							className="block w-full rounded-md border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
-						>
-							{fontOptions.map((font) => (
-								<option key={font} value={font} style={{ fontFamily: font }}>
-									{font}
-								</option>
-							))}
-						</select>
+						<Select value={settings.fontFamily} onValueChange={(value) => updateDesign("fontFamily", value)}>
+							<SelectTrigger className="w-full">
+								<SelectValue placeholder="Select a font" />
+							</SelectTrigger>
+							<SelectContent>
+								{fontOptions.map((font) => (
+									<SelectItem key={font} value={font} style={{ fontFamily: font }}>
+										{font}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 
 					{/* Save Button */}
 					<div className="flex justify-end pt-4 border-t border-gray-200">
-						<button
-							onClick={saveFormData}
-							disabled={saving}
-							className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							{saving ? "Saving..." : "Save Design"}
-						</button>
+						<DialogClose asChild>
+							<Button
+								onClick={saveFormData}
+								disabled={saving}
+								className="cursor-pointer"
+							>
+								{saving ? "Saving..." : "Save Design"}
+							</Button>
+						</DialogClose>
 					</div>
 				</div>
 			</DialogContent>

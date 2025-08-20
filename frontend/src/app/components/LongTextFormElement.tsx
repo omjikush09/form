@@ -6,6 +6,13 @@ import { useFormAnswers } from "@/components/context/FormAnswerContext";
 import { useFormContext } from "@/components/context/FormContext";
 import QuestionProperties from "./QuestionProperties";
 import { Button } from "@/components/ui/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 
 const type: ElementType = "TextField";
 
@@ -45,6 +52,8 @@ function FormComponet({
 				</div>
 				<textarea
 					disabled={disabled}
+					minLength={formDataCurrent?.data?.minLength || undefined}
+					maxLength={formDataCurrent?.data?.maxLength || undefined}
 					style={
 						{
 							"--placeholder-color": formData.settings.answerColor,
@@ -53,8 +62,18 @@ function FormComponet({
 						} as React.CSSProperties
 					}
 					placeholder={formDataCurrent?.data?.placeholder}
-					className="border-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] p-3 min-h-[120px] resize-y mb-4"
-					value={answerData?.answer}
+					className={`border-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] p-3 resize-y mb-4 ${
+						formDataCurrent?.data?.size === "small"
+							? "min-h-[80px]"
+							: formDataCurrent?.data?.size === "medium"
+							? "min-h-[120px]"
+							: formDataCurrent?.data?.size === "large"
+							? "min-h-[200px]"
+							: formDataCurrent?.data?.size === "very-large"
+							? "min-h-[300px]"
+							: "min-h-[120px]" // default medium
+					}`}
+					value={answerData?.answer || ""}
 					onChange={(e) =>
 						setAnswer(formDataCurrent?.id!, "LONG_TEXT", e.target.value)
 					}
@@ -85,7 +104,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	};
 
 	return (
-		<div className="pt-5 px-2 bg-[#f2f4f7] h-full">
+		<div className="pt-5 px-2 bg-[#f2f4f7] h-full overflow-auto">
 			{/* Question Level Properties */}
 			<QuestionProperties
 				title={data?.title || ""}
@@ -124,14 +143,82 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
 				/>
 			</div>
-			
+
+			{/* Text Area Size */}
+			<div className="mb-3">
+				<label className="block text-sm font-medium text-gray-700">
+					Text Area Size
+				</label>
+				<Select
+					value={data?.data?.size || "medium"}
+					onValueChange={(value) =>
+						updateQuestionProperty("data", {
+							...data?.data,
+							size: value,
+						})
+					}
+				>
+					<SelectTrigger className="w-full">
+						<SelectValue placeholder="Select size" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="small">Small</SelectItem>
+						<SelectItem value="medium">Medium</SelectItem>
+						<SelectItem value="large">Large</SelectItem>
+						<SelectItem value="very-large">Very Large</SelectItem>
+					</SelectContent>
+				</Select>
+			</div>
+
+			{/* Min Length */}
+			<div className="mb-3">
+				<label className="block text-sm font-medium text-gray-700">
+					Minimum Length
+				</label>
+				<input
+					type="number"
+					min="0"
+					value={data?.data?.minLength || ""}
+					onChange={(e) =>
+						updateQuestionProperty("data", {
+							...data?.data,
+							minLength: e.target.value ? parseInt(e.target.value) : undefined,
+						})
+					}
+					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
+					placeholder="No minimum"
+				/>
+			</div>
+
+			{/* Max Length */}
+			<div className="mb-3">
+				<label className="block text-sm font-medium text-gray-700">
+					Maximum Length
+				</label>
+				<input
+					type="number"
+					min="1"
+					value={data?.data?.maxLength || ""}
+					onChange={(e) =>
+						updateQuestionProperty("data", {
+							...data?.data,
+							maxLength: e.target.value ? parseInt(e.target.value) : undefined,
+						})
+					}
+					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
+					placeholder="No maximum"
+				/>
+			</div>
+
 			<div className="flex items-center mb-3">
 				<div className="flex h-6 items-center">
 					<input
 						id="required-field"
 						type="checkbox"
 						checked={data?.required || false}
-						onChange={(e) => updateQuestionProperty("required", e.target.checked)}
+						onChange={(e) =>
+							updateQuestionProperty("required", e.target.checked)
+						}
 						className="h-4 w-4 rounded-sm border-gray-300 text-gray-600 focus:ring-gray-600 focus:outline-hidden focus:ring-0"
 					/>
 				</div>

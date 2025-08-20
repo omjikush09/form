@@ -20,6 +20,8 @@ export type FormStepData = {
 
 type ElementContextType = {
 	formStepData: FormStepData[];
+	loading: boolean;
+	error: string | null;
 	addElements: (formId: string, type: AddElementFromType) => void;
 	setElements: (formId: string) => void;
 	changeFormData: (step: number, field: string, value: string) => void;
@@ -47,6 +49,8 @@ export default function ElementContextProvider({
 	children: React.ReactNode;
 }) {
 	const [formStepData, setFormData] = useState<FormStepData[]>([]);
+	const [loading, setLoading] = useState<boolean>(false);
+	const [error, setError] = useState<string | null>(null);
 
 	const addElements = (formId: string, type: AddElementFromType) => {
 		// body[step] = 2;
@@ -65,11 +69,16 @@ export default function ElementContextProvider({
 	};
 
 	const setElements = async (formId: string) => {
+		setLoading(true);
+		setError(null);
 		try {
 			const data = await api.get(`/form/${formId}/questions`);
 			setFormData(data.data.data);
 		} catch (error) {
+			setError("Failed to load form steps");
 			toast("Failed to load form data");
+		} finally {
+			setLoading(false);
 		}
 	};
 	const changeFormData = (
@@ -369,6 +378,8 @@ export default function ElementContextProvider({
 		<FormStepContext.Provider
 			value={{
 				formStepData,
+				loading,
+				error,
 				addElements,
 				setElements,
 				changeFormData,

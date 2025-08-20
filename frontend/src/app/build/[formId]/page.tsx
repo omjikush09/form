@@ -5,6 +5,7 @@ import { IoRocketOutline } from "react-icons/io5";
 import { CiPlay1 } from "react-icons/ci";
 import { IoBuildSharp } from "react-icons/io5";
 import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/shadcn-io/spinner";
 import React, { useEffect, useState } from "react";
 import {
 	Tooltip,
@@ -22,11 +23,12 @@ import { useFormContext } from "@/components/context/FormContext";
 function Build() {
 	const params = useParams<{ formId: string }>();
 	const { formId } = params;
-	const { formData, loading, fetchFormData } = useFormContext();
+	const { formData, loading: formContextLoading, error: formContextError, fetchFormData } = useFormContext();
 
 	const [selectedStep, setSelectedStep] = useState<number>(0);
 
-	const { setElements, formStepData, publishForm } = useFormStepData();
+	const { setElements, formStepData, publishForm, loading: formStepLoading, error: formStepError } = useFormStepData();
+  
 
 	useEffect(() => {
 		if (formId) {
@@ -37,6 +39,29 @@ function Build() {
 
 	const stepData = formStepData.find((data) => data.step == selectedStep);
 
+	// Show loading spinner if either form context or form step data is loading
+	const isLoading = formContextLoading || formStepLoading || !formId;
+	const hasError = formContextError || formStepError;
+
+	if (hasError) {
+		return (
+			<div className="flex flex-col h-full items-center justify-center">
+				<div className="text-red-500 text-xl mb-4">⚠️</div>
+				<p className="text-lg text-gray-600 mb-4">Something went wrong</p>
+				<p className="text-sm text-gray-500">Please try refreshing the page</p>
+			</div>
+		);
+	}
+
+	if (isLoading) {
+		return (
+			<div className="flex flex-col h-full items-center justify-center">
+				<Spinner className="w-8 h-8 mb-4" />
+				<p className="text-lg text-gray-600">Loading form...</p>
+			</div>
+		);
+	}
+
 	return (
 		<div className="flex flex-col h-full ">
 			{/* {JSON.stringify(stepData)} */}
@@ -46,7 +71,7 @@ function Build() {
 					<IoMdArrowBack color="blue" size={40} />
 					<Separator orientation="vertical" />
 					<h4 className="text-3xl">
-						{loading ? "Loading..." : formData.title}
+						{formData.title}
 					</h4>
 				</div>
 				<div className="px-5 py-1 border shadow-2xl hover:bg-gray-300 rounded cursor-pointer">

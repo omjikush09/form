@@ -46,6 +46,8 @@ function FormComponet({
 				<input
 					type="number"
 					disabled={disabled}
+					min={formDataCurrent?.data?.minValue || undefined}
+					max={formDataCurrent?.data?.maxValue || undefined}
 					style={
 						{
 							"--placeholder-color": formData.settings.answerColor,
@@ -112,6 +114,44 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						})
 					}
 					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
+				/>
+			</div>
+
+			{/* Min Value Field */}
+			<div className="mb-3">
+				<label className="block text-sm font-medium text-gray-700">
+					Minimum Value
+				</label>
+				<input
+					type="number"
+					value={data?.data?.minValue || ""}
+					onChange={(e) =>
+						updateQuestionProperty("data", {
+							...data?.data,
+							minValue: e.target.value ? parseFloat(e.target.value) : undefined,
+						})
+					}
+					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
+					placeholder="e.g., 0 (leave empty for no minimum)"
+				/>
+			</div>
+
+			{/* Max Value Field */}
+			<div className="mb-3">
+				<label className="block text-sm font-medium text-gray-700">
+					Maximum Value
+				</label>
+				<input
+					type="number"
+					value={data?.data?.maxValue || ""}
+					onChange={(e) =>
+						updateQuestionProperty("data", {
+							...data?.data,
+							maxValue: e.target.value ? parseFloat(e.target.value) : undefined,
+						})
+					}
+					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
+					placeholder="e.g., 100 (leave empty for no maximum)"
 				/>
 			</div>
 

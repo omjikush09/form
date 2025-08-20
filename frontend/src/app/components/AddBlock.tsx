@@ -3,7 +3,6 @@ import React from "react";
 import {
 	Dialog,
 	DialogContent,
-	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
@@ -18,26 +17,26 @@ function AddBlock({ formId }: { formId: string }) {
 			<DialogTrigger className="border-2 px-2  py-1 rounded bg-[#f9fafb] text-bold text-[14px] flex items-center gap-0.5  ">
 				<FaPlus size={10} /> Add Block
 			</DialogTrigger>
-			<DialogContent>
+			<DialogContent className="overflow-auto h-[80%]">
 				<DialogHeader>
 					<DialogTitle>Pick a block you want to add</DialogTitle>
-					<DialogDescription>
-						{formTypes.map((type) => {
-							return (
-								<div
-									key={type}
-									onClick={() => {
-										addElements(formId, type);
-									}}
-									className={`cursor-pointer flex text-black  items-center gap-2 p-2 mb-2 ${ElementDefaultData[type]?.color}`}
-								>
-									{ElementDefaultData[type]?.icon}
-									{type}
-								</div>
-							);
-						})}
-					</DialogDescription>
 				</DialogHeader>
+				<div className="mt-4">
+					{formTypes.map((type) => {
+						return (
+							<div
+								key={type}
+								onClick={() => {
+									addElements(formId, type);
+								}}
+								className={`cursor-pointer flex text-black  items-center gap-2 p-2 mb-2 ${ElementDefaultData[type]?.color}`}
+							>
+								{ElementDefaultData[type]?.icon}
+								{type}
+							</div>
+						);
+					})}
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

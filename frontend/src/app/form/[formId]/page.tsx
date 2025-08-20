@@ -7,6 +7,7 @@ import {
 import { useFormContext } from "@/components/context/FormContext";
 import { FormStepData } from "@/components/context/FormStepDataContext";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/shadcn-io/spinner";
 import { useFormStepData } from "@/hook/useFormData";
 import api from "@/util/axios";
 import { useParams } from "next/navigation";
@@ -15,8 +16,8 @@ import { toast } from "sonner";
 
 function Form() {
 	const { formId } = useParams<{ formId: string }>();
-	const { formStepData, setElements } = useFormStepData();
-	const { formData, fetchFormData } = useFormContext();
+	const { formStepData, setElements, loading: formStepLoading, error: formStepError } = useFormStepData();
+	const { formData, fetchFormData, loading: formContextLoading, error: formContextError } = useFormContext();
 	const [currentStep, setCurrentStep] = useState(0);
 	const { setAnswers, submitAnswers, validateQuestion, canProceedToNext } =
 		useFormAnswers();
@@ -97,7 +98,6 @@ function Form() {
 
 	useEffect(() => {
 		if (formId) {
-			console.log(formId);
 			getQuestions(formId);
 			fetchFormData(formId);
 		}
@@ -136,7 +136,32 @@ function Form() {
 		if (currentStep == formStepData.length - 1) {
 		}
 	}, [currentStep]);
+
 	const stepData = formStepData.find((data) => data.step == currentStep);
+	
+	// Show loading spinner if either form context or form step data is loading
+	const isLoading = formContextLoading || formStepLoading;
+	const hasError = formContextError || formStepError;
+
+	if (hasError) {
+		return (
+			<div className="flex flex-col h-full items-center justify-center">
+				<div className="text-red-500 text-xl mb-4">⚠️</div>
+				<p className="text-lg text-gray-600 mb-4">Something went wrong</p>
+				<p className="text-sm text-gray-500">Please try refreshing the page</p>
+			</div>
+		);
+	}
+
+	if (isLoading) {
+		return (
+			<div className="flex flex-col h-full items-center justify-center">
+				<Spinner className="w-8 h-8 mb-4" />
+				<p className="text-lg text-gray-600">Loading form...</p>
+			</div>
+		);
+	}
+
 	return (
 		<div
 			className=" grid place-items-center h-full w-full"

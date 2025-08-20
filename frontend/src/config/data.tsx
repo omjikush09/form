@@ -166,6 +166,7 @@ export const FormDefaultData: Record<
 					value: "Option 2",
 				},
 			],
+			selectionType: "unlimited",
 		},
 	},
 	CONTACT_INFO: {
@@ -176,7 +177,7 @@ export const FormDefaultData: Record<
 		data: {
 			fields: [
 				{
-					id: "first_name",
+					id: uuidv4(),
 					title: "First Name",
 					placeholder: "Your first name",
 					type: "text",
@@ -184,7 +185,7 @@ export const FormDefaultData: Record<
 					display: true,
 				},
 				{
-					id: "last_name",
+					id: uuidv4(),
 					title: "Last Name",
 					placeholder: "Your last name",
 					type: "text",
@@ -192,7 +193,7 @@ export const FormDefaultData: Record<
 					display: true,
 				},
 				{
-					id: "email",
+					id: uuidv4(),
 					title: "Email",
 					placeholder: "your.email@example.com",
 					type: "email",
@@ -200,7 +201,7 @@ export const FormDefaultData: Record<
 					display: true,
 				},
 				{
-					id: "phone_number",
+					id: uuidv4(),
 					title: "Phone Number",
 					placeholder: "+1 (555) 123-4567",
 					type: "tel",
