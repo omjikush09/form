@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
-import { ElementType } from "./FormElements";
-import { useFormStepData } from "@/hook/useFormData";
-import { useFormAnswers } from "@/components/context/FormAnswerContext";
-import { useFormContext } from "@/components/context/FormContext";
+import { ElementType } from "../../components/FormElements/FormElements";
+import { useFormStepData } from "@/context/FormStepDataContext";
+import { useFormAnswers } from "@/context/FormAnswerContext";
+import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -107,107 +107,115 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 
 	return (
 		<PropertiesSetting
-				title={data?.title || ""}
-				description={data?.description || ""}
-				required={data?.required || false}
-				onTitleChange={(title) => updateQuestionProperty("title", title)}
-				onDescriptionChange={(description) =>
-					updateQuestionProperty("description", description)
-				}
-				onRequiredChange={(required) => updateQuestionProperty("required", required)}
-			>
-				{/* Long Text specific properties */}
-				<div className="space-y-4">
-					{/* Placeholder Field */}
-					<div className="space-y-2">
-						<Label htmlFor="placeholder">Placeholder Text</Label>
-						<Input
-							id="placeholder"
-							type="text"
-							value={data?.data?.placeholder || ""}
-							onChange={(e) =>
-								updateQuestionProperty("data", {
-									...data?.data,
-									placeholder: e.target.value,
-								})
-							}
-							placeholder="Enter placeholder text"
-						/>
-					</div>
-
-					{/* Button Text */}
-					<div className="space-y-2">
-						<Label htmlFor="buttonText">Button Text</Label>
-						<Input
-							id="buttonText"
-							type="text"
-							value={data?.buttonText || ""}
-							onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
-							placeholder="Enter button text"
-						/>
-					</div>
-
-					{/* Text Area Size */}
-					<div className="space-y-2">
-						<Label htmlFor="size">Text Area Size</Label>
-						<Select
-							value={data?.data?.size || "medium"}
-							onValueChange={(value) =>
-								updateQuestionProperty("data", {
-									...data?.data,
-									size: value,
-								})
-							}
-						>
-							<SelectTrigger className="w-full">
-								<SelectValue placeholder="Select size" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="small">Small</SelectItem>
-								<SelectItem value="medium">Medium</SelectItem>
-								<SelectItem value="large">Large</SelectItem>
-								<SelectItem value="very-large">Very Large</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-
-					{/* Min Length */}
-					<div className="space-y-2">
-						<Label htmlFor="minLength">Minimum Length</Label>
-						<Input
-							id="minLength"
-							type="number"
-							min="0"
-							value={data?.data?.minLength || ""}
-							onChange={(e) =>
-								updateQuestionProperty("data", {
-									...data?.data,
-									minLength: e.target.value ? parseInt(e.target.value) : undefined,
-								})
-							}
-							placeholder="No minimum"
-						/>
-					</div>
-
-					{/* Max Length */}
-					<div className="space-y-2">
-						<Label htmlFor="maxLength">Maximum Length</Label>
-						<Input
-							id="maxLength"
-							type="number"
-							min="1"
-							value={data?.data?.maxLength || ""}
-							onChange={(e) =>
-								updateQuestionProperty("data", {
-									...data?.data,
-									maxLength: e.target.value ? parseInt(e.target.value) : undefined,
-								})
-							}
-							placeholder="No maximum"
-						/>
-					</div>
+			title={data?.title || ""}
+			description={data?.description || ""}
+			required={data?.required || false}
+			onTitleChange={(title) => updateQuestionProperty("title", title)}
+			onDescriptionChange={(description) =>
+				updateQuestionProperty("description", description)
+			}
+			onRequiredChange={(required) =>
+				updateQuestionProperty("required", required)
+			}
+		>
+			{/* Long Text specific properties */}
+			<div className="space-y-4">
+				{/* Placeholder Field */}
+				<div className="space-y-2">
+					<Label htmlFor="placeholder">Placeholder Text</Label>
+					<Input
+						id="placeholder"
+						type="text"
+						value={data?.data?.placeholder || ""}
+						onChange={(e) =>
+							updateQuestionProperty("data", {
+								...data?.data,
+								placeholder: e.target.value,
+							})
+						}
+						placeholder="Enter placeholder text"
+					/>
 				</div>
-			</PropertiesSetting>
+
+				{/* Button Text */}
+				<div className="space-y-2">
+					<Label htmlFor="buttonText">Button Text</Label>
+					<Input
+						id="buttonText"
+						type="text"
+						value={data?.buttonText || ""}
+						onChange={(e) =>
+							updateQuestionProperty("buttonText", e.target.value)
+						}
+						placeholder="Enter button text"
+					/>
+				</div>
+
+				{/* Text Area Size */}
+				<div className="space-y-2">
+					<Label htmlFor="size">Text Area Size</Label>
+					<Select
+						value={data?.data?.size || "medium"}
+						onValueChange={(value) =>
+							updateQuestionProperty("data", {
+								...data?.data,
+								size: value,
+							})
+						}
+					>
+						<SelectTrigger className="w-full">
+							<SelectValue placeholder="Select size" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="small">Small</SelectItem>
+							<SelectItem value="medium">Medium</SelectItem>
+							<SelectItem value="large">Large</SelectItem>
+							<SelectItem value="very-large">Very Large</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
+
+				{/* Min Length */}
+				<div className="space-y-2">
+					<Label htmlFor="minLength">Minimum Length</Label>
+					<Input
+						id="minLength"
+						type="number"
+						min="0"
+						value={data?.data?.minLength || ""}
+						onChange={(e) =>
+							updateQuestionProperty("data", {
+								...data?.data,
+								minLength: e.target.value
+									? parseInt(e.target.value)
+									: undefined,
+							})
+						}
+						placeholder="No minimum"
+					/>
+				</div>
+
+				{/* Max Length */}
+				<div className="space-y-2">
+					<Label htmlFor="maxLength">Maximum Length</Label>
+					<Input
+						id="maxLength"
+						type="number"
+						min="1"
+						value={data?.data?.maxLength || ""}
+						onChange={(e) =>
+							updateQuestionProperty("data", {
+								...data?.data,
+								maxLength: e.target.value
+									? parseInt(e.target.value)
+									: undefined,
+							})
+						}
+						placeholder="No maximum"
+					/>
+				</div>
+			</div>
+		</PropertiesSetting>
 	);
 }
 

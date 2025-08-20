@@ -1,6 +1,6 @@
-import FormAnswerProvider from "@/components/context/FormAnswerContext";
-import ElementContextProvider from "@/components/context/FormStepDataContext";
-import { FormProvider } from "@/components/context/FormContext";
+import FormAnswerProvider from "@/context/FormAnswerContext";
+import ElementContextProvider from "@/context/FormStepDataContext";
+import { FormProvider } from "@/context/FormContext";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

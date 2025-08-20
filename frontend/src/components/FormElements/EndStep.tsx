@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from "react";
-import { ElementType } from "./FormElements";
-import { useFormStepData } from "@/hook/useFormData";
-import { useFormContext } from "@/components/context/FormContext";
+import { ElementType } from "../../components/FormElements/FormElements";
+import { useFormStepData } from "@/context/FormStepDataContext";
+import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 
 const type: ElementType = "TextField";

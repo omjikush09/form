@@ -9,7 +9,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { IoColorPaletteOutline } from "react-icons/io5";
-import { useFormContext } from "@/components/context/FormContext";
+import { useFormContext } from "@/context/FormContext";
 import { Button } from "@/components/ui/button";
 import {
 	Select,
@@ -211,13 +211,20 @@ function FormDesign() {
 						<label className="block text-sm font-medium text-gray-700 mb-2">
 							Font Family
 						</label>
-						<Select value={settings.fontFamily} onValueChange={(value) => updateDesign("fontFamily", value)}>
+						<Select
+							value={settings.fontFamily}
+							onValueChange={(value) => updateDesign("fontFamily", value)}
+						>
 							<SelectTrigger className="w-full">
 								<SelectValue placeholder="Select a font" />
 							</SelectTrigger>
 							<SelectContent>
 								{fontOptions.map((font) => (
-									<SelectItem key={font} value={font} style={{ fontFamily: font }}>
+									<SelectItem
+										key={font}
+										value={font}
+										style={{ fontFamily: font }}
+									>
 										{font}
 									</SelectItem>
 								))}

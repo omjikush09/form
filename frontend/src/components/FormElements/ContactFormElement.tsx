@@ -1,10 +1,10 @@
 "use client";
 import React, { useState } from "react";
-import { ElementType } from "./FormElements";
-import { useFormStepData } from "@/hook/useFormData";
-import { useFormAnswers } from "@/components/context/FormAnswerContext";
+import { ElementType } from "../../components/FormElements/FormElements";
+import { useFormStepData } from "@/context/FormStepDataContext";
+import { useFormAnswers } from "@/context/FormAnswerContext";
 import { Eye, EyeOff, Settings } from "lucide-react";
-import { useFormContext } from "@/components/context/FormContext";
+import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -138,7 +138,9 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 			onDescriptionChange={(description) =>
 				updateQuestionProperty("description", description)
 			}
-			onRequiredChange={(required) => updateQuestionProperty("required", required)}
+			onRequiredChange={(required) =>
+				updateQuestionProperty("required", required)
+			}
 		>
 			{/* Contact Info specific properties */}
 			<div className="space-y-4">
@@ -149,19 +151,25 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						id="buttonText"
 						type="text"
 						value={data?.buttonText || ""}
-						onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
+						onChange={(e) =>
+							updateQuestionProperty("buttonText", e.target.value)
+						}
 						placeholder="Enter button text"
 					/>
 				</div>
 
 				{/* Field Level Properties */}
 				<div className="space-y-2">
-					<h4 className="text-sm font-medium text-muted-foreground">Contact Fields</h4>
+					<h4 className="text-sm font-medium text-muted-foreground">
+						Contact Fields
+					</h4>
 					{data.data?.fields?.map((field: any) => (
 						<div key={field.id}>
 							{/* Field Header */}
 							<div className="flex items-center justify-between mt-4">
-								<Label className="block text-sm font-light text-gray-800">{field.title}</Label>
+								<Label className="block text-sm font-light text-gray-800">
+									{field.title}
+								</Label>
 								<div className="flex items-center space-x-4">
 									{/* Visibility Toggle Icon */}
 									<button
@@ -182,7 +190,9 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 										type="button"
 										className="text-gray-500 hover:text-gray-700"
 										onClick={() =>
-											setOpenSettings(openSettings === field.id ? null : field.id)
+											setOpenSettings(
+												openSettings === field.id ? null : field.id
+											)
 										}
 									>
 										<Settings className="w-5 h-5" />
@@ -194,7 +204,9 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 							{openSettings === field.id && (
 								<div className="mt-2 p-4 border rounded-sm bg-gray-100">
 									<div className="mb-3">
-										<Label className="block text-sm font-medium text-gray-700">Label</Label>
+										<Label className="block text-sm font-medium text-gray-700">
+											Label
+										</Label>
 										<Input
 											type="text"
 											value={field.title}
@@ -205,12 +217,18 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 										/>
 									</div>
 									<div className="mb-3">
-										<Label className="block text-sm font-medium text-gray-700">Placeholder</Label>
+										<Label className="block text-sm font-medium text-gray-700">
+											Placeholder
+										</Label>
 										<Input
 											type="text"
 											value={field.placeholder}
 											onChange={(e) =>
-												updateFieldProperty(field.id, "placeholder", e.target.value)
+												updateFieldProperty(
+													field.id,
+													"placeholder",
+													e.target.value
+												)
 											}
 											className="block w-full rounded-md mt-1 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm focus:ring-1"
 										/>
@@ -222,13 +240,20 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 												type="checkbox"
 												checked={field.required}
 												onChange={(e) =>
-													updateFieldProperty(field.id, "required", e.target.checked)
+													updateFieldProperty(
+														field.id,
+														"required",
+														e.target.checked
+													)
 												}
 												className="h-4 w-4 rounded-sm border-gray-300 text-gray-600 focus:ring-gray-600 focus:outline-hidden focus:ring-0"
 											/>
 										</div>
 										<div className="ml-2 text-sm">
-											<Label htmlFor={`${field.id}-required`} className="text-gray-600">
+											<Label
+												htmlFor={`${field.id}-required`}
+												className="text-gray-600"
+											>
 												Make this required?
 											</Label>
 										</div>

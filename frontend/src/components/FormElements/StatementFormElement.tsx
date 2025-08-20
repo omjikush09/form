@@ -1,15 +1,13 @@
 "use client";
-import React, { useState } from "react";
-import { ElementType } from "./FormElements";
-import { useFormStepData } from "@/hook/useFormData";
-import { Button } from "@/components/ui/button";
-import { useFormContext } from "@/components/context/FormContext";
+import React from "react";
+
+import { useFormStepData } from "@/context/FormStepDataContext";
+import { useFormAnswers } from "@/context/FormAnswerContext";
+import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useFormAnswers } from "@/components/context/FormAnswerContext";
-
-const type: ElementType = "TextField";
 
 function FormComponet({
 	selectedStep,
@@ -21,36 +19,35 @@ function FormComponet({
 	buttonOnClink?: () => void;
 }) {
 	const { formStepData } = useFormStepData();
+	const { answers, setAnswer, isSubmitting } = useFormAnswers();
 	const { formData } = useFormContext();
-	const { isSubmitting } = useFormAnswers();
+	const formDataCurrent = formStepData.find(
+		(data) => data.step == selectedStep
+	);
 
-	const data = formStepData.find((data) => data.step == selectedStep);
 	return (
-		<div className="flex flex-col gap-8 ">
-			<div>
-				{/* {JSON.stringify(data)} */}
-				{/* xcx */}
+		<div className=" flex flex-col gap-2 ">
+			<div className="text-black">
 				<h1
 					className="text-4xl"
 					style={{ color: formData.settings.questionColor }}
 				>
-					{data?.title}
+					{formDataCurrent?.title}
 				</h1>
 				<div style={{ color: formData.settings.descriptionColor }}>
-					{data?.description}
+					{formDataCurrent?.description}
 				</div>
 
 				<Button
 					disabled={isSubmitting}
-					className="cursor-pointer"
+					className="cursor-pointer mt-4"
 					style={{
 						color: formData.settings.buttonTextColor,
 						backgroundColor: formData.settings.buttonColor,
 					}}
-					// disabled={disabled}
 					onClick={buttonOnClink}
 				>
-					{data?.buttonText ?? "next"}
+					{formDataCurrent?.buttonText}
 				</Button>
 			</div>
 		</div>
@@ -58,21 +55,27 @@ function FormComponet({
 }
 
 function properTiesComponent({ selectedStep }: { selectedStep: number }) {
-	const { formStepData: formData, changeFormData } = useFormStepData();
-	const data = formData.find((data) => data.step == selectedStep);
+	const { formStepData, changeQuestionProperty } = useFormStepData();
+	const data = formStepData.find((data) => data.step == selectedStep);
+
+	const updateQuestionProperty = (property: string, value: any) => {
+		changeQuestionProperty(selectedStep, property, value);
+	};
 
 	return (
 		<PropertiesSetting
 			title={data?.title || ""}
 			description={data?.description || ""}
-			required={false}
-			onTitleChange={(title) => changeFormData(selectedStep, "title", title)}
+			required={data?.required || false}
+			onTitleChange={(title) => updateQuestionProperty("title", title)}
 			onDescriptionChange={(description) =>
-				changeFormData(selectedStep, "description", description)
+				updateQuestionProperty("description", description)
 			}
-			onRequiredChange={() => {}} // Not applicable for start step
+			onRequiredChange={(required) =>
+				updateQuestionProperty("required", required)
+			}
 		>
-			{/* Start Step specific properties */}
+			{/* Statement specific properties */}
 			<div className="space-y-4">
 				{/* Button Text */}
 				<div className="space-y-2">
@@ -81,7 +84,9 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						id="buttonText"
 						type="text"
 						value={data?.buttonText || ""}
-						onChange={(e) => changeFormData(selectedStep, "buttonText", e.target.value)}
+						onChange={(e) =>
+							updateQuestionProperty("buttonText", e.target.value)
+						}
 						placeholder="Enter button text"
 					/>
 				</div>
@@ -90,4 +95,4 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	);
 }
 
-export default { FormComponet, properTiesComponent, type };
+export default { FormComponet, properTiesComponent };

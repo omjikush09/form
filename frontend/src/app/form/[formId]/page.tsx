@@ -1,14 +1,11 @@
 "use client";
-import { FormElement } from "@/app/components/FormElements";
-import {
-	FormAnswer,
-	useFormAnswers,
-} from "@/components/context/FormAnswerContext";
-import { useFormContext } from "@/components/context/FormContext";
-import { FormStepData } from "@/components/context/FormStepDataContext";
+import { FormElement } from "@/components/FormElements/FormElements";
+import { FormAnswer, useFormAnswers } from "@/context/FormAnswerContext";
+import { useFormContext } from "@/context/FormContext";
+import { FormStepData } from "@/context/FormStepDataContext";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/shadcn-io/spinner";
-import { useFormStepData } from "@/hook/useFormData";
+import { useFormStepData } from "@/context/FormStepDataContext";
 import api from "@/util/axios";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -16,8 +13,18 @@ import { toast } from "sonner";
 
 function Form() {
 	const { formId } = useParams<{ formId: string }>();
-	const { formStepData, setElements, loading: formStepLoading, error: formStepError } = useFormStepData();
-	const { formData, fetchFormData, loading: formContextLoading, error: formContextError } = useFormContext();
+	const {
+		formStepData,
+		setElements,
+		loading: formStepLoading,
+		error: formStepError,
+	} = useFormStepData();
+	const {
+		formData,
+		fetchFormData,
+		loading: formContextLoading,
+		error: formContextError,
+	} = useFormContext();
 	const [currentStep, setCurrentStep] = useState(0);
 	const { setAnswers, submitAnswers, validateQuestion, canProceedToNext } =
 		useFormAnswers();
@@ -138,7 +145,7 @@ function Form() {
 	}, [currentStep]);
 
 	const stepData = formStepData.find((data) => data.step == currentStep);
-	
+
 	// Show loading spinner if either form context or form step data is loading
 	const isLoading = formContextLoading || formStepLoading;
 	const hasError = formContextError || formStepError;

@@ -1,15 +1,12 @@
 "use client";
 import React, { useState } from "react";
-import { ElementType } from "./FormElements";
-import { useFormStepData } from "@/hook/useFormData";
-import { useFormAnswers } from "@/components/context/FormAnswerContext";
-import { useFormContext } from "@/components/context/FormContext";
+import { useFormStepData } from "@/context/FormStepDataContext";
+import { useFormAnswers } from "@/context/FormAnswerContext";
+import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
-const type: ElementType = "TextField";
 
 function FormComponet({
 	selectedStep,
@@ -95,7 +92,9 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 			onDescriptionChange={(description) =>
 				updateQuestionProperty("description", description)
 			}
-			onRequiredChange={(required) => updateQuestionProperty("required", required)}
+			onRequiredChange={(required) =>
+				updateQuestionProperty("required", required)
+			}
 		>
 			{/* Short Text specific properties */}
 			<div className="space-y-4">
@@ -123,7 +122,9 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						id="buttonText"
 						type="text"
 						value={data?.buttonText || ""}
-						onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
+						onChange={(e) =>
+							updateQuestionProperty("buttonText", e.target.value)
+						}
 						placeholder="Enter button text"
 					/>
 				</div>
@@ -132,4 +133,4 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	);
 }
 
-export default { FormComponet, properTiesComponent, type };
+export default { FormComponet, properTiesComponent };

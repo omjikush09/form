@@ -1,21 +1,14 @@
 "use client";
 import React from "react";
-import { useFormStepData } from "@/hook/useFormData";
-import { useFormAnswers } from "@/components/context/FormAnswerContext";
+import { useFormStepData } from "@/context/FormStepDataContext";
+import { useFormAnswers } from "@/context/FormAnswerContext";
 import { FiTrash2 } from "react-icons/fi";
-import { useFormContext } from "@/components/context/FormContext";
+import { useFormContext } from "@/context/FormContext";
 import { Plus, GripVertical } from "lucide-react";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import {
 	DndContext,
 	closestCenter,
@@ -69,7 +62,9 @@ function SortableOptionItem({
 		<div
 			ref={setNodeRef}
 			style={style}
-			className={`flex items-center gap-2 px-3 py-2 hover:bg-gray-50 border rounded-md mb-2 bg-white ${isDragging ? "z-50 shadow-lg" : ""}`}
+			className={`flex items-center gap-2 px-3 py-2 hover:bg-gray-50 border rounded-md mb-2 bg-white ${
+				isDragging ? "z-50 shadow-lg" : ""
+			}`}
 		>
 			<div
 				{...attributes}
@@ -134,36 +129,43 @@ function FormComponet({
 				<div style={{ color: formData.settings.descriptionColor }}>
 					{formDataCurrent?.description}
 				</div>
-				<div className="mt-4">
-					<Select
-						disabled={disabled}
-						value={answerData?.answer || ""}
-						onValueChange={(value) =>
-							setAnswer(
-								formDataCurrent?.id!,
-								"DROPDOWN",
-								value
-							)
-						}
-					>
-						<SelectTrigger 
-							className="w-full p-3 border-2 rounded-md"
-							style={{
-								borderColor: formData.settings.answerColor,
-								color: formData.settings.answerColor,
-							}}
-						>
-							<SelectValue placeholder="Choose an option..." />
-						</SelectTrigger>
-						<SelectContent>
-							{formDataCurrent?.data &&
-								formDataCurrent.data.options.map((option: any) => (
-									<SelectItem key={option.id} value={option.value}>
-										{option.label}
-									</SelectItem>
-								))}
-						</SelectContent>
-					</Select>
+				<div className="mt-4 flex flex-col gap-3">
+					{formDataCurrent?.data &&
+						formDataCurrent.data.options.map((option: any) => (
+							<label
+								key={option.id}
+								className="flex items-center gap-3 cursor-pointer"
+							>
+								<input
+									type="checkbox"
+									disabled={disabled}
+									checked={answerData?.answer === option.value}
+									onChange={(e) => {
+										if (e.target.checked) {
+											setAnswer(
+												formDataCurrent?.id!,
+												"SINGLE_SELECT_OPTION",
+												option.value
+											);
+										} else {
+											setAnswer(
+												formDataCurrent?.id!,
+												"SINGLE_SELECT_OPTION",
+												""
+											);
+										}
+									}}
+									className="w-5 h-5 rounded border-2"
+									style={{
+										accentColor: formData.settings.answerColor,
+										borderColor: formData.settings.answerColor,
+									}}
+								/>
+								<span style={{ color: formData.settings.answerColor }}>
+									{option.label}
+								</span>
+							</label>
+						))}
 				</div>
 
 				<Button
@@ -248,9 +250,11 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 			onDescriptionChange={(description) =>
 				updateQuestionProperty("description", description)
 			}
-			onRequiredChange={(required) => updateQuestionProperty("required", required)}
+			onRequiredChange={(required) =>
+				updateQuestionProperty("required", required)
+			}
 		>
-			{/* Dropdown specific properties */}
+			{/* Single Select specific properties */}
 			<div className="space-y-4">
 				{/* Button Text */}
 				<div className="space-y-2">
@@ -259,7 +263,9 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						id="buttonText"
 						type="text"
 						value={data?.buttonText || ""}
-						onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
+						onChange={(e) =>
+							updateQuestionProperty("buttonText", e.target.value)
+						}
 						placeholder="Enter button text"
 					/>
 				</div>
@@ -268,7 +274,9 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 				<div className="space-y-3">
 					{/* Header */}
 					<div className="flex items-center justify-between">
-						<Label className="text-sm font-medium text-muted-foreground">Dropdown Options</Label>
+						<Label className="text-sm font-medium text-muted-foreground">
+							Single-Select Options
+						</Label>
 						<Button
 							type="button"
 							variant="ghost"

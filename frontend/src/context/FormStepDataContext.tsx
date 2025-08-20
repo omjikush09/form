@@ -5,7 +5,7 @@ import {
 	AddElementFromType,
 } from "@/config/data";
 import api from "@/util/axios";
-import { createContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
 import { arrayMove } from "@dnd-kit/sortable";
 
@@ -398,3 +398,12 @@ export default function ElementContextProvider({
 		</FormStepContext.Provider>
 	);
 }
+
+export const useFormStepData = () => {
+	const context = useContext(FormStepContext);
+	if (!context) {
+		throw new Error("FormStepContext must be used within ContextProvider");
+	}
+	return context;
+};
+

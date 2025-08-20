@@ -1,9 +1,9 @@
 "use client";
 import React from "react";
-import { useFormStepData } from "@/hook/useFormData";
-import { useFormAnswers } from "@/components/context/FormAnswerContext";
+import { useFormStepData } from "@/context/FormStepDataContext";
+import { useFormAnswers } from "@/context/FormAnswerContext";
 import { FiTrash2 } from "react-icons/fi";
-import { useFormContext } from "@/components/context/FormContext";
+import { useFormContext } from "@/context/FormContext";
 import { Plus, GripVertical } from "lucide-react";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
@@ -93,7 +93,7 @@ function SortableOptionItem({
 			<button
 				type="button"
 				onClick={() => handleRemoveOption(option.id)}
-				className="flex-shrink-0 p-1 text-gray-400 cursor-pointer hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+				className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
 				title="Remove option"
 			>
 				<FiTrash2 className="w-4 h-4" />
@@ -121,54 +121,6 @@ function FormComponet({
 		(data) => data.questionId == formDataCurrent?.id
 	);
 
-	// Handle multi-select checkbox changes
-	const handleCheckboxChange = (optionValue: string, checked: boolean) => {
-		const currentAnswers = answerData?.answer || [];
-		const selectionType = formDataCurrent?.data?.selectionType || "unlimited";
-		const minSelections = formDataCurrent?.data?.minSelections || 0;
-		const maxSelections = formDataCurrent?.data?.maxSelections || null;
-		const fixedSelections = formDataCurrent?.data?.fixedSelections || null;
-		let newAnswers;
-
-		if (checked) {
-			// Check limits based on selection type
-			if (
-				selectionType === "fixed" &&
-				fixedSelections &&
-				currentAnswers.length >= fixedSelections
-			) {
-				return; // Don't allow if fixed limit reached
-			}
-			if (
-				selectionType === "range" &&
-				maxSelections &&
-				currentAnswers.length >= maxSelections
-			) {
-				return; // Don't allow if max limit reached
-			}
-			// Add the option if checked
-			newAnswers = [...currentAnswers, optionValue];
-		} else {
-			// Check minimum when unchecking
-			if (
-				selectionType === "fixed" &&
-				fixedSelections &&
-				currentAnswers.length <= fixedSelections
-			) {
-				return; // Don't allow unchecking if it would go below fixed requirement
-			}
-			if (selectionType === "range" && currentAnswers.length <= minSelections) {
-				return; // Don't allow unchecking if it would go below minimum
-			}
-			// Remove the option if unchecked
-			newAnswers = currentAnswers.filter(
-				(value: string) => value !== optionValue
-			);
-		}
-
-		setAnswer(formDataCurrent?.id!, "MULTI_SELECT_OPTION", newAnswers);
-	};
-
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="">
@@ -184,60 +136,32 @@ function FormComponet({
 				<div style={{ color: formData.settings.descriptionColor }}>
 					{formDataCurrent?.description}
 				</div>
-				{formDataCurrent?.data?.selectionType &&
-					formDataCurrent.data.selectionType !== "unlimited" && (
-						<div className="mt-2 text-sm text-gray-600">
-							{formDataCurrent.data.selectionType === "fixed" &&
-								formDataCurrent.data.fixedSelections && (
-									<>
-										Please select exactly {formDataCurrent.data.fixedSelections}{" "}
-										option(s)
-										{answerData?.answer?.length && (
-											<span className="ml-1">
-												({answerData.answer.length}/
-												{formDataCurrent.data.fixedSelections} selected)
-											</span>
-										)}
-									</>
-								)}
-							{formDataCurrent.data.selectionType === "range" && (
-								<>
-									Select {formDataCurrent.data.minSelections || 0} to{" "}
-									{formDataCurrent.data.maxSelections || "unlimited"} option(s)
-									{answerData?.answer?.length && (
-										<span className="ml-1">
-											({answerData.answer.length} selected)
-										</span>
-									)}
-								</>
-							)}
-						</div>
-					)}
-				<div className="mt-4 flex flex-col gap-3">
-					{formDataCurrent?.data &&
-						formDataCurrent.data.options.map((option: any) => (
-							<label
-								key={option.id}
-								className="flex items-center gap-3 cursor-pointer"
-							>
-								<input
-									type="checkbox"
-									disabled={disabled}
-									checked={answerData?.answer?.includes(option.value) || false}
-									onChange={(e) =>
-										handleCheckboxChange(option.value, e.target.checked)
-									}
-									className="w-5 h-5 rounded border-2"
-									style={{
-										accentColor: formData.settings.answerColor,
-										borderColor: formData.settings.answerColor,
-									}}
-								/>
-								<span style={{ color: formData.settings.answerColor }}>
-									{option.label}
-								</span>
-							</label>
-						))}
+				<div className="mt-4">
+					<Select
+						disabled={disabled}
+						value={answerData?.answer || ""}
+						onValueChange={(value) =>
+							setAnswer(formDataCurrent?.id!, "DROPDOWN", value)
+						}
+					>
+						<SelectTrigger
+							className="w-full p-3 border-2 rounded-md"
+							style={{
+								borderColor: formData.settings.answerColor,
+								color: formData.settings.answerColor,
+							}}
+						>
+							<SelectValue placeholder="Choose an option..." />
+						</SelectTrigger>
+						<SelectContent>
+							{formDataCurrent?.data &&
+								formDataCurrent.data.options.map((option: any) => (
+									<SelectItem key={option.id} value={option.value}>
+										{option.label}
+									</SelectItem>
+								))}
+						</SelectContent>
+					</Select>
 				</div>
 
 				<Button
@@ -326,7 +250,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 				updateQuestionProperty("required", required)
 			}
 		>
-			{/* Multi Select specific properties */}
+			{/* Dropdown specific properties */}
 			<div className="space-y-4">
 				{/* Button Text */}
 				<div className="space-y-2">
@@ -342,99 +266,12 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 					/>
 				</div>
 
-				{/* Selection Type Controls */}
-				<div className="space-y-2">
-					<Label htmlFor="selectionType">Selection Type</Label>
-					<Select
-						value={data?.data?.selectionType || "unlimited"}
-						onValueChange={(value) =>
-							updateQuestionProperty("data", {
-								...data?.data,
-								selectionType: value,
-								// Reset other values when changing type
-								minSelections: undefined,
-								maxSelections: undefined,
-								fixedSelections: undefined,
-							})
-						}
-					>
-						<SelectTrigger className="w-full">
-							<SelectValue placeholder="Select type" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="unlimited">Unlimited selections</SelectItem>
-							<SelectItem value="fixed">Fixed number of selections</SelectItem>
-							<SelectItem value="range">Min/Max range</SelectItem>
-						</SelectContent>
-					</Select>
-				</div>
-
-				{/* Fixed Selection Controls */}
-				{data?.data?.selectionType === "fixed" && (
-					<div className="space-y-2">
-						<Label htmlFor="fixedSelections">
-							Number of selections required
-						</Label>
-						<Input
-							id="fixedSelections"
-							type="number"
-							min={1}
-							value={data?.data?.fixedSelections || ""}
-							onChange={(e) =>
-								updateQuestionProperty("data", {
-									...data?.data,
-									fixedSelections: parseInt(e.target.value) || 1,
-								})
-							}
-							placeholder="e.g., 3"
-						/>
-					</div>
-				)}
-
-				{/* Range Selection Controls */}
-				{data?.data?.selectionType === "range" && (
-					<>
-						<div className="space-y-2">
-							<Label htmlFor="minSelections">Minimum selections</Label>
-							<Input
-								id="minSelections"
-								type="number"
-								min={0}
-								value={data?.data?.minSelections || ""}
-								onChange={(e) =>
-									updateQuestionProperty("data", {
-										...data?.data,
-										minSelections: parseInt(e.target.value) || 0,
-									})
-								}
-								placeholder="e.g., 1"
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="maxSelections">Maximum selections</Label>
-							<Input
-								id="maxSelections"
-								type="number"
-								min={1}
-								value={data?.data?.maxSelections || ""}
-								onChange={(e) =>
-									updateQuestionProperty("data", {
-										...data?.data,
-										maxSelections: parseInt(e.target.value) || null,
-									})
-								}
-								placeholder="e.g., 5 (leave empty for no max)"
-							/>
-						</div>
-					</>
-				)}
-
 				{/* Options UI */}
 				<div className="space-y-3">
 					{/* Header */}
 					<div className="flex items-center justify-between">
 						<Label className="text-sm font-medium text-muted-foreground">
-							Multi-Select Options
+							Dropdown Options
 						</Label>
 						<Button
 							type="button"

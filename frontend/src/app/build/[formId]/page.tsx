@@ -13,12 +13,12 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import AddBlock from "@/app/components/AddBlock";
-import { useFormStepData } from "@/hook/useFormData";
+import AddBlock from "@/components/AddBlock";
+import { useFormStepData } from "@/context/FormStepDataContext";
 import StepList from "@/components/StepList";
-import { FormElement } from "@/app/components/FormElements";
+import { FormElement } from "@/components/FormElements/FormElements";
 import FormDesign from "@/components/FormDesign";
-import { useFormContext } from "@/components/context/FormContext";
+import { useFormContext } from "@/context/FormContext";
 
 function Build() {
 	const params = useParams<{ formId: string }>();

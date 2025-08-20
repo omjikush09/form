@@ -1,7 +1,7 @@
 "use client";
 import { ElementDefaultData } from "@/config/data";
-import { useFormStepData } from "@/hook/useFormData";
-import { FormStepData } from "@/components/context/FormStepDataContext";
+import { useFormStepData } from "@/context/FormStepDataContext";
+import { FormStepData } from "@/context/FormStepDataContext";
 import React, { Dispatch, SetStateAction } from "react";
 import { HiOutlineDotsVertical } from "react-icons/hi";
 import {

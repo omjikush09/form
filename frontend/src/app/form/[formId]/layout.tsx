@@ -1,6 +1,6 @@
-import FormAnswerProvider from "@/components/context/FormAnswerContext";
-import { FormProvider } from "@/components/context/FormContext";
-import ElementContextProvider from "@/components/context/FormStepDataContext";
+import FormAnswerProvider from "@/context/FormAnswerContext";
+import { FormProvider } from "@/context/FormContext";
+import ElementContextProvider from "@/context/FormStepDataContext";
 import type { Metadata } from "next";
 
 export default function RootLayout({
