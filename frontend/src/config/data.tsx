@@ -291,6 +291,7 @@ export const formTypes: AddElementFromType[] = [
 interface ElementDataDefaults {
 	icon: React.ReactNode;
 	color: string;
+	thumbnail: string;
 }
 
 export const ElementDefaultData: Record<FormElementTypes, ElementDataDefaults> =
@@ -298,53 +299,66 @@ export const ElementDefaultData: Record<FormElementTypes, ElementDataDefaults> =
 		SHORT_TEXT: {
 			icon: <FaGripLines />,
 			color: "bg-blue-300",
+			thumbnail: "/images/shortText.jpeg",
 		},
 		LONG_TEXT: {
 			icon: <FaGripLines />,
 			color: "bg-red-400",
+			thumbnail: "/images/longText.jpeg",
 		},
 		START_STEP: {
 			icon: <FaGripLines />,
 			color: "bg-green-400",
+			thumbnail: "",
 		},
 		END_STEP: {
 			icon: <FaGripLines />,
 			color: "bg-amber-400",
+			thumbnail: "",
 		},
 		CONTACT_INFO: {
 			icon: <IoPersonOutline />,
 			color: "bg-indigo-400",
+			thumbnail: "/images/contactInfo.jpeg",
 		},
 		SINGLE_SELECT_OPTION: {
 			icon: <RxDropdownMenu />,
 			color: "bg-yellow-200",
+			thumbnail: "/images/singleSelect.jpeg",
 		},
 		MULTI_SELECT_OPTION: {
 			icon: <MdCheckBox />,
 			color: "bg-purple-200",
+			thumbnail: "/images/multiSelect.jpeg",
 		},
 		ADDRESS: {
 			icon: <CiLocationOn />,
 			color: "bg-red-400",
+			thumbnail: "/images/address.jpeg",
 		},
 		DATE: {
 			icon: <SlCalender />,
 			color: "bg-violet-400",
+			thumbnail: "/images/date.jpeg",
 		},
 		NUMBER: {
 			icon: <BsHash />,
 			color: "bg-violet-200",
+			thumbnail: "/images/number.jpeg",
 		},
 		STATEMENT: {
 			icon: <FaRegFileAlt />,
 			color: "bg-pink-400",
+			thumbnail: "/images/statement.jpeg",
 		},
 		URL: {
 			icon: <FaLink />,
 			color: "bg-teal-400",
+			thumbnail: "/images/url.jpeg",
 		},
 		DROPDOWN: {
 			icon: <RxDropdownMenu />,
 			color: "bg-blue-400",
+			thumbnail: "/images/dropdown.jpeg",
 		},
 	};
