@@ -66,7 +66,7 @@ function SortableStepItem({
 			onClick={() => {
 				setSelectedQuestions(data.step);
 			}}
-			className={`p-2 mb-2 ${ElementDefaultData[data.type]?.color} ${
+			className={`px-2 py-1.5 mb-2 ${ElementDefaultData[data.type]?.color} ${
 				data.step == selectedQuestions
 					? " border-dashed border-1 border-black"
 					: ""
@@ -84,7 +84,7 @@ function SortableStepItem({
 				</div>
 			)}
 			{ElementDefaultData[data.type]?.icon}{" "}
-			<h1 className="truncate">{data.title}</h1>
+			<h1 className="truncate text-[12px]">{data.title}</h1>
 			{!(data.type == "START_STEP") && !(data.type == "END_STEP") && (
 				<div className="ml-auto">
 					<DropdownMenu>
@@ -140,7 +140,7 @@ function StepList({
 	const sortableItems = formStepData.map((data) => data.step);
 
 	return (
-		<div className="bg-[#f2f4f7] p-2 pt-4 h-full">
+		<div className="bg-[#f2f4f7] p-2 pt-4 h-full overflow-y-auto">
 			<p className="text-gray-500 text-sm mb-2">Blocks</p>
 
 			<DndContext

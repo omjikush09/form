@@ -4,7 +4,9 @@ import { ElementType } from "./FormElements";
 import { useFormStepData } from "@/hook/useFormData";
 import { Button } from "@/components/ui/button";
 import { useFormContext } from "@/components/context/FormContext";
-import QuestionProperties from "./QuestionProperties";
+import PropertiesSetting from "@/components/PropertiesSetting";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { useFormAnswers } from "@/components/context/FormAnswerContext";
 
 const type: ElementType = "TextField";
@@ -60,17 +62,31 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	const data = formData.find((data) => data.step == selectedStep);
 
 	return (
-		<div className="pt-5 px-2 bg-[#f2f4f7] h-full">
-			{/* Question Level Properties */}
-			<QuestionProperties
-				title={data?.title || ""}
-				description={data?.description || ""}
-				onTitleChange={(title) => changeFormData(selectedStep, "title", title)}
-				onDescriptionChange={(description) =>
-					changeFormData(selectedStep, "description", description)
-				}
-			/>
-		</div>
+		<PropertiesSetting
+			title={data?.title || ""}
+			description={data?.description || ""}
+			required={false}
+			onTitleChange={(title) => changeFormData(selectedStep, "title", title)}
+			onDescriptionChange={(description) =>
+				changeFormData(selectedStep, "description", description)
+			}
+			onRequiredChange={() => {}} // Not applicable for start step
+		>
+			{/* Start Step specific properties */}
+			<div className="space-y-4">
+				{/* Button Text */}
+				<div className="space-y-2">
+					<Label htmlFor="buttonText">Button Text</Label>
+					<Input
+						id="buttonText"
+						type="text"
+						value={data?.buttonText || ""}
+						onChange={(e) => changeFormData(selectedStep, "buttonText", e.target.value)}
+						placeholder="Enter button text"
+					/>
+				</div>
+			</div>
+		</PropertiesSetting>
 	);
 }
 

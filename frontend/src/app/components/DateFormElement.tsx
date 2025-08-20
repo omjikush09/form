@@ -4,8 +4,10 @@ import { ElementType } from "./FormElements";
 import { useFormStepData } from "@/hook/useFormData";
 import { useFormAnswers } from "@/components/context/FormAnswerContext";
 import { useFormContext } from "@/components/context/FormContext";
-import QuestionProperties from "./QuestionProperties";
+import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const type: ElementType = "TextField";
 
@@ -84,46 +86,31 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	};
 
 	return (
-		<div className="pt-5 px-2 bg-[#f2f4f7] h-full">
-			{/* Question Level Properties */}
-			<QuestionProperties
-				title={data?.title || ""}
-				description={data?.description || ""}
-				onTitleChange={(title) => updateQuestionProperty("title", title)}
-				onDescriptionChange={(description) =>
-					updateQuestionProperty("description", description)
-				}
-			/>
-
-			<div className="mb-3">
-				<label className="block text-sm font-medium text-gray-700">
-					Button Text
-				</label>
-				<input
-					type="text"
-					value={data?.buttonText || ""}
-					onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
-					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
-				/>
-			</div>
-
-			<div className="flex items-center mb-3">
-				<div className="flex h-6 items-center">
-					<input
-						id="required-field"
-						type="checkbox"
-						checked={data?.required || false}
-						onChange={(e) => updateQuestionProperty("required", e.target.checked)}
-						className="h-4 w-4 rounded-sm border-gray-300 text-gray-600 focus:ring-gray-600 focus:outline-hidden focus:ring-0"
+		<PropertiesSetting
+			title={data?.title || ""}
+			description={data?.description || ""}
+			required={data?.required || false}
+			onTitleChange={(title) => updateQuestionProperty("title", title)}
+			onDescriptionChange={(description) =>
+				updateQuestionProperty("description", description)
+			}
+			onRequiredChange={(required) => updateQuestionProperty("required", required)}
+		>
+			{/* Date specific properties */}
+			<div className="space-y-4">
+				{/* Button Text */}
+				<div className="space-y-2">
+					<Label htmlFor="buttonText">Button Text</Label>
+					<Input
+						id="buttonText"
+						type="text"
+						value={data?.buttonText || ""}
+						onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
+						placeholder="Enter button text"
 					/>
 				</div>
-				<div className="ml-2 text-sm">
-					<label htmlFor="required-field" className="text-gray-600">
-						Make this field required?
-					</label>
-				</div>
 			</div>
-		</div>
+		</PropertiesSetting>
 	);
 }
 

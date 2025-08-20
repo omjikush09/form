@@ -23,12 +23,22 @@ import { useFormContext } from "@/components/context/FormContext";
 function Build() {
 	const params = useParams<{ formId: string }>();
 	const { formId } = params;
-	const { formData, loading: formContextLoading, error: formContextError, fetchFormData } = useFormContext();
+	const {
+		formData,
+		loading: formContextLoading,
+		error: formContextError,
+		fetchFormData,
+	} = useFormContext();
 
 	const [selectedStep, setSelectedStep] = useState<number>(0);
 
-	const { setElements, formStepData, publishForm, loading: formStepLoading, error: formStepError } = useFormStepData();
-  
+	const {
+		setElements,
+		formStepData,
+		publishForm,
+		loading: formStepLoading,
+		error: formStepError,
+	} = useFormStepData();
 
 	useEffect(() => {
 		if (formId) {
@@ -70,9 +80,7 @@ function Build() {
 				<div className="flex justify-center items-center gap-4">
 					<IoMdArrowBack color="blue" size={40} />
 					<Separator orientation="vertical" />
-					<h4 className="text-3xl">
-						{formData.title}
-					</h4>
+					<h4 className="text-3xl">{formData.title}</h4>
 				</div>
 				<div className="px-5 py-1 border shadow-2xl hover:bg-gray-300 rounded cursor-pointer">
 					<div className="flex flex-col items-center">
@@ -108,16 +116,16 @@ function Build() {
 				</div>
 			</div>
 
-			<div className="flex-1 h-full">
-				<div className="grid grid-cols-[250px_3fr_1fr] gap-2 h-full">
-					<div className="h-full">
+			<div className="flex-1 overflow-hidden">
+				<div className="grid grid-cols-12 gap-4 h-full bg-gray-50">
+					<div className="h-full col-span-2 overflow-hidden">
 						<StepList
 							selectedQuestions={selectedStep}
 							setSelectedQuestions={setSelectedStep}
 						/>
 					</div>
 
-					<div className="flex flex-col ">
+					<div className="flex flex-col col-span-7  ">
 						<div className="p-2 px-4 bg-[#f2f4f7] my-2 rounded-3xl flex gap-2">
 							<AddBlock formId={formId} />
 							{/* {selectedStep}
@@ -140,7 +148,7 @@ function Build() {
 							})()}
 						</div>
 					</div>
-					<div>
+					<div className="h-full overflow-hidden col-span-3">
 						{(() => {
 							if (!stepData?.type) return;
 							const Component = FormElement[stepData.type].properTiesComponent;

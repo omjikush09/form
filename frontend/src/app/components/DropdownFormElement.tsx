@@ -5,8 +5,10 @@ import { useFormAnswers } from "@/components/context/FormAnswerContext";
 import { FiTrash2 } from "react-icons/fi";
 import { useFormContext } from "@/components/context/FormContext";
 import { Plus, GripVertical } from "lucide-react";
-import QuestionProperties from "./QuestionProperties";
+import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
@@ -67,14 +69,12 @@ function SortableOptionItem({
 		<div
 			ref={setNodeRef}
 			style={style}
-			className={`flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-2 rounded mb-2 ${
-				!isLast ? "border-b border-gray-100" : ""
-			} ${isDragging ? "z-50" : ""}`}
+			className={`flex items-center gap-2 px-3 py-2 hover:bg-gray-50 border rounded-md mb-2 bg-white ${isDragging ? "z-50 shadow-lg" : ""}`}
 		>
 			<div
 				{...attributes}
 				{...listeners}
-				className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200/50 rounded mr-2"
+				className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200/50 rounded flex-shrink-0"
 			>
 				<GripVertical className="w-4 h-4 text-gray-400" />
 			</div>
@@ -85,13 +85,13 @@ function SortableOptionItem({
 					updateOptionProperty(option.id, "label", e.target.value);
 					updateOptionProperty(option.id, "value", e.target.value);
 				}}
-				className="text-gray-700 bg-transparent border-none outline-none flex-1 cursor-pointer"
+				className="flex-1 text-gray-700 bg-transparent border-none outline-none min-w-0"
 				placeholder="Enter option text"
 			/>
 			<button
 				type="button"
 				onClick={() => handleRemoveOption(option.id)}
-				className="text-gray-400 hover:text-red-500 transition-colors ml-2"
+				className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
 				title="Remove option"
 			>
 				<FiTrash2 className="w-4 h-4" />
@@ -240,88 +240,72 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 		data.data?.options?.map((option: any) => option.id) || [];
 
 	return (
-		<div className="pt-5 px-2 bg-[#f2f4f7] h-full">
-			{/* Question Level Properties */}
-			<QuestionProperties
-				title={data?.title || ""}
-				description={data?.description || ""}
-				onTitleChange={(title) => updateQuestionProperty("title", title)}
-				onDescriptionChange={(description) =>
-					updateQuestionProperty("description", description)
-				}
-			/>
-			
-			<div className="mb-3">
-				<label className="block text-sm font-medium text-gray-700">
-					Button Text
-				</label>
-				<input
-					type="text"
-					value={data?.buttonText || ""}
-					onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
-					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
-				/>
-			</div>
-			
-			<div className="flex items-center mb-3">
-				<div className="flex h-6 items-center">
-					<input
-						id="required-field"
-						type="checkbox"
-						checked={data?.required || false}
-						onChange={(e) => updateQuestionProperty("required", e.target.checked)}
-						className="h-4 w-4 rounded-sm border-gray-300 text-gray-600 focus:ring-gray-600 focus:outline-hidden focus:ring-0"
+		<PropertiesSetting
+			title={data?.title || ""}
+			description={data?.description || ""}
+			required={data?.required || false}
+			onTitleChange={(title) => updateQuestionProperty("title", title)}
+			onDescriptionChange={(description) =>
+				updateQuestionProperty("description", description)
+			}
+			onRequiredChange={(required) => updateQuestionProperty("required", required)}
+		>
+			{/* Dropdown specific properties */}
+			<div className="space-y-4">
+				{/* Button Text */}
+				<div className="space-y-2">
+					<Label htmlFor="buttonText">Button Text</Label>
+					<Input
+						id="buttonText"
+						type="text"
+						value={data?.buttonText || ""}
+						onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
+						placeholder="Enter button text"
 					/>
 				</div>
-				<div className="ml-2 text-sm">
-					<label htmlFor="required-field" className="text-gray-600">
-						Make this field required?
-					</label>
-				</div>
-			</div>
 
-			{/* Options UI */}
-			<div className="  ">
-				{/* Header */}
-				<div className="flex items-center justify-between px-4 py-3 ">
-					<div className="flex items-center gap-2">
-						<span className="text-gray-700 font-medium">Options</span>
-					</div>
-					<button
-						type="button"
-						onClick={handleAddOption}
-						className="text-gray-400 hover:text-blue-500 transition-colors"
-						title="Add new option"
-					>
-						<Plus className="w-4 h-4" />
-					</button>
-				</div>
-
-				{/* Options List */}
-				<div className="py-2">
-					<DndContext
-						sensors={sensors}
-						collisionDetection={closestCenter}
-						onDragEnd={handleDragEnd}
-					>
-						<SortableContext
-							items={sortableItems}
-							strategy={verticalListSortingStrategy}
+				{/* Options UI */}
+				<div className="space-y-3">
+					{/* Header */}
+					<div className="flex items-center justify-between">
+						<Label className="text-sm font-medium text-muted-foreground">Dropdown Options</Label>
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							onClick={handleAddOption}
+							title="Add new option"
 						>
-							{data.data?.options?.map((option: any, index: number) => (
-								<SortableOptionItem
-									key={option.id}
-									option={option}
-									updateOptionProperty={updateOptionProperty}
-									handleRemoveOption={handleRemoveOption}
-									isLast={index === data.data.options.length - 1}
-								/>
-							))}
-						</SortableContext>
-					</DndContext>
+							<Plus className="w-4 h-4" />
+						</Button>
+					</div>
+
+					{/* Options List */}
+					<div>
+						<DndContext
+							sensors={sensors}
+							collisionDetection={closestCenter}
+							onDragEnd={handleDragEnd}
+						>
+							<SortableContext
+								items={sortableItems}
+								strategy={verticalListSortingStrategy}
+							>
+								{data.data?.options?.map((option: any, index: number) => (
+									<SortableOptionItem
+										key={option.id}
+										option={option}
+										updateOptionProperty={updateOptionProperty}
+										handleRemoveOption={handleRemoveOption}
+										isLast={index === data.data.options.length - 1}
+									/>
+								))}
+							</SortableContext>
+						</DndContext>
+					</div>
 				</div>
 			</div>
-		</div>
+		</PropertiesSetting>
 	);
 }
 

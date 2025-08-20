@@ -4,8 +4,10 @@ import { ElementType } from "./FormElements";
 import { useFormStepData } from "@/hook/useFormData";
 import { useFormAnswers } from "@/components/context/FormAnswerContext";
 import { useFormContext } from "@/components/context/FormContext";
-import QuestionProperties from "./QuestionProperties";
+import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
@@ -104,131 +106,108 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	};
 
 	return (
-		<div className="pt-5 px-2 bg-[#f2f4f7] h-full overflow-auto">
-			{/* Question Level Properties */}
-			<QuestionProperties
+		<PropertiesSetting
 				title={data?.title || ""}
 				description={data?.description || ""}
+				required={data?.required || false}
 				onTitleChange={(title) => updateQuestionProperty("title", title)}
 				onDescriptionChange={(description) =>
 					updateQuestionProperty("description", description)
 				}
-			/>
+				onRequiredChange={(required) => updateQuestionProperty("required", required)}
+			>
+				{/* Long Text specific properties */}
+				<div className="space-y-4">
+					{/* Placeholder Field */}
+					<div className="space-y-2">
+						<Label htmlFor="placeholder">Placeholder Text</Label>
+						<Input
+							id="placeholder"
+							type="text"
+							value={data?.data?.placeholder || ""}
+							onChange={(e) =>
+								updateQuestionProperty("data", {
+									...data?.data,
+									placeholder: e.target.value,
+								})
+							}
+							placeholder="Enter placeholder text"
+						/>
+					</div>
 
-			{/* Placeholder Field */}
-			<div className="mb-3">
-				<label className="block text-sm font-medium text-gray-700">
-					Placeholder Text
-				</label>
-				<input
-					type="text"
-					value={data?.data?.placeholder || ""}
-					onChange={(e) =>
-						updateQuestionProperty("data", {
-							...data?.data,
-							placeholder: e.target.value,
-						})
-					}
-					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
-				/>
-			</div>
-			<div className="mb-3">
-				<label className="block text-sm font-medium text-gray-700">
-					Button Text
-				</label>
-				<input
-					type="text"
-					value={data?.buttonText || ""}
-					onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
-					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
-				/>
-			</div>
+					{/* Button Text */}
+					<div className="space-y-2">
+						<Label htmlFor="buttonText">Button Text</Label>
+						<Input
+							id="buttonText"
+							type="text"
+							value={data?.buttonText || ""}
+							onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
+							placeholder="Enter button text"
+						/>
+					</div>
 
-			{/* Text Area Size */}
-			<div className="mb-3">
-				<label className="block text-sm font-medium text-gray-700">
-					Text Area Size
-				</label>
-				<Select
-					value={data?.data?.size || "medium"}
-					onValueChange={(value) =>
-						updateQuestionProperty("data", {
-							...data?.data,
-							size: value,
-						})
-					}
-				>
-					<SelectTrigger className="w-full">
-						<SelectValue placeholder="Select size" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="small">Small</SelectItem>
-						<SelectItem value="medium">Medium</SelectItem>
-						<SelectItem value="large">Large</SelectItem>
-						<SelectItem value="very-large">Very Large</SelectItem>
-					</SelectContent>
-				</Select>
-			</div>
+					{/* Text Area Size */}
+					<div className="space-y-2">
+						<Label htmlFor="size">Text Area Size</Label>
+						<Select
+							value={data?.data?.size || "medium"}
+							onValueChange={(value) =>
+								updateQuestionProperty("data", {
+									...data?.data,
+									size: value,
+								})
+							}
+						>
+							<SelectTrigger className="w-full">
+								<SelectValue placeholder="Select size" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="small">Small</SelectItem>
+								<SelectItem value="medium">Medium</SelectItem>
+								<SelectItem value="large">Large</SelectItem>
+								<SelectItem value="very-large">Very Large</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
 
-			{/* Min Length */}
-			<div className="mb-3">
-				<label className="block text-sm font-medium text-gray-700">
-					Minimum Length
-				</label>
-				<input
-					type="number"
-					min="0"
-					value={data?.data?.minLength || ""}
-					onChange={(e) =>
-						updateQuestionProperty("data", {
-							...data?.data,
-							minLength: e.target.value ? parseInt(e.target.value) : undefined,
-						})
-					}
-					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
-					placeholder="No minimum"
-				/>
-			</div>
+					{/* Min Length */}
+					<div className="space-y-2">
+						<Label htmlFor="minLength">Minimum Length</Label>
+						<Input
+							id="minLength"
+							type="number"
+							min="0"
+							value={data?.data?.minLength || ""}
+							onChange={(e) =>
+								updateQuestionProperty("data", {
+									...data?.data,
+									minLength: e.target.value ? parseInt(e.target.value) : undefined,
+								})
+							}
+							placeholder="No minimum"
+						/>
+					</div>
 
-			{/* Max Length */}
-			<div className="mb-3">
-				<label className="block text-sm font-medium text-gray-700">
-					Maximum Length
-				</label>
-				<input
-					type="number"
-					min="1"
-					value={data?.data?.maxLength || ""}
-					onChange={(e) =>
-						updateQuestionProperty("data", {
-							...data?.data,
-							maxLength: e.target.value ? parseInt(e.target.value) : undefined,
-						})
-					}
-					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
-					placeholder="No maximum"
-				/>
-			</div>
-
-			<div className="flex items-center mb-3">
-				<div className="flex h-6 items-center">
-					<input
-						id="required-field"
-						type="checkbox"
-						checked={data?.required || false}
-						onChange={(e) =>
-							updateQuestionProperty("required", e.target.checked)
-						}
-						className="h-4 w-4 rounded-sm border-gray-300 text-gray-600 focus:ring-gray-600 focus:outline-hidden focus:ring-0"
-					/>
+					{/* Max Length */}
+					<div className="space-y-2">
+						<Label htmlFor="maxLength">Maximum Length</Label>
+						<Input
+							id="maxLength"
+							type="number"
+							min="1"
+							value={data?.data?.maxLength || ""}
+							onChange={(e) =>
+								updateQuestionProperty("data", {
+									...data?.data,
+									maxLength: e.target.value ? parseInt(e.target.value) : undefined,
+								})
+							}
+							placeholder="No maximum"
+						/>
+					</div>
 				</div>
-				<div className="ml-2 text-sm">
-					<label htmlFor="required-field" className="text-gray-600">
-						Make this field required?
-					</label>
-				</div>
-			</div>
-		</div>
+			</PropertiesSetting>
 	);
 }
 

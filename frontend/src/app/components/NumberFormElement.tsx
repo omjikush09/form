@@ -4,8 +4,10 @@ import { ElementType } from "./FormElements";
 import { useFormStepData } from "@/hook/useFormData";
 import { useFormAnswers } from "@/components/context/FormAnswerContext";
 import { useFormContext } from "@/components/context/FormContext";
-import QuestionProperties from "./QuestionProperties";
+import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const type: ElementType = "TextField";
 
@@ -88,102 +90,82 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	};
 
 	return (
-		<div className="pt-5 px-2 bg-[#f2f4f7] h-full">
-			{/* Question Level Properties */}
-			<QuestionProperties
-				title={data?.title || ""}
-				description={data?.description || ""}
-				onTitleChange={(title) => updateQuestionProperty("title", title)}
-				onDescriptionChange={(description) =>
-					updateQuestionProperty("description", description)
-				}
-			/>
-
-			{/* Placeholder Field */}
-			<div className="mb-3">
-				<label className="block text-sm font-medium text-gray-700">
-					Placeholder Text
-				</label>
-				<input
-					type="text"
-					value={data?.data?.placeholder || ""}
-					onChange={(e) =>
-						updateQuestionProperty("data", {
-							...data?.data,
-							placeholder: e.target.value,
-						})
-					}
-					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
-				/>
-			</div>
-
-			{/* Min Value Field */}
-			<div className="mb-3">
-				<label className="block text-sm font-medium text-gray-700">
-					Minimum Value
-				</label>
-				<input
-					type="number"
-					value={data?.data?.minValue || ""}
-					onChange={(e) =>
-						updateQuestionProperty("data", {
-							...data?.data,
-							minValue: e.target.value ? parseFloat(e.target.value) : undefined,
-						})
-					}
-					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
-					placeholder="e.g., 0 (leave empty for no minimum)"
-				/>
-			</div>
-
-			{/* Max Value Field */}
-			<div className="mb-3">
-				<label className="block text-sm font-medium text-gray-700">
-					Maximum Value
-				</label>
-				<input
-					type="number"
-					value={data?.data?.maxValue || ""}
-					onChange={(e) =>
-						updateQuestionProperty("data", {
-							...data?.data,
-							maxValue: e.target.value ? parseFloat(e.target.value) : undefined,
-						})
-					}
-					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
-					placeholder="e.g., 100 (leave empty for no maximum)"
-				/>
-			</div>
-
-			<div className="mb-3">
-				<label className="block text-sm font-medium text-gray-700">
-					Button Text
-				</label>
-				<input
-					type="text"
-					value={data?.buttonText || ""}
-					onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
-					className="block px-3 py-2 mt-1 w-full rounded-md border-2 border-gray-300 shadow-xs focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
-				/>
-			</div>
-
-			<div className="flex items-center mb-3">
-				<div className="flex h-6 items-center">
-					<input
-						id="required-field"
-						type="checkbox"
-						checked={data?.required || false}
-						onChange={(e) => updateQuestionProperty("required", e.target.checked)}
-						className="h-4 w-4 rounded-sm border-gray-300 text-gray-600 focus:ring-gray-600 focus:outline-hidden focus:ring-0"
+		<PropertiesSetting
+			title={data?.title || ""}
+			description={data?.description || ""}
+			required={data?.required || false}
+			onTitleChange={(title) => updateQuestionProperty("title", title)}
+			onDescriptionChange={(description) =>
+				updateQuestionProperty("description", description)
+			}
+			onRequiredChange={(required) => updateQuestionProperty("required", required)}
+		>
+			{/* Number specific properties */}
+			<div className="space-y-4">
+				{/* Placeholder Field */}
+				<div className="space-y-2">
+					<Label htmlFor="placeholder">Placeholder Text</Label>
+					<Input
+						id="placeholder"
+						type="text"
+						value={data?.data?.placeholder || ""}
+						onChange={(e) =>
+							updateQuestionProperty("data", {
+								...data?.data,
+								placeholder: e.target.value,
+							})
+						}
+						placeholder="Enter placeholder text"
 					/>
 				</div>
-				<div className="ml-2 text-sm">
-					<label htmlFor="required-field" className="text-gray-600">
-						Make this field required?
-					</label>
+
+				{/* Button Text */}
+				<div className="space-y-2">
+					<Label htmlFor="buttonText">Button Text</Label>
+					<Input
+						id="buttonText"
+						type="text"
+						value={data?.buttonText || ""}
+						onChange={(e) => updateQuestionProperty("buttonText", e.target.value)}
+						placeholder="Enter button text"
+					/>
+				</div>
+
+				{/* Min Value Field */}
+				<div className="space-y-2">
+					<Label htmlFor="minValue">Minimum Value</Label>
+					<Input
+						id="minValue"
+						type="number"
+						value={data?.data?.minValue || ""}
+						onChange={(e) =>
+							updateQuestionProperty("data", {
+								...data?.data,
+								minValue: e.target.value ? parseFloat(e.target.value) : undefined,
+							})
+						}
+						placeholder="e.g., 0 (leave empty for no minimum)"
+					/>
+				</div>
+
+				{/* Max Value Field */}
+				<div className="space-y-2">
+					<Label htmlFor="maxValue">Maximum Value</Label>
+					<Input
+						id="maxValue"
+						type="number"
+						value={data?.data?.maxValue || ""}
+						onChange={(e) =>
+							updateQuestionProperty("data", {
+								...data?.data,
+								maxValue: e.target.value ? parseFloat(e.target.value) : undefined,
+							})
+						}
+						placeholder="e.g., 100 (leave empty for no maximum)"
+					/>
 				</div>
 			</div>
-		</div>
+		</PropertiesSetting>
 	);
 }
 

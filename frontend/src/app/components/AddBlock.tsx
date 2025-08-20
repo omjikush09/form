@@ -12,7 +12,7 @@ import { useFormStepData } from "@/hook/useFormData";
 import { makeFirstLetterUpperCase } from "@/util/helper";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 function AddBlock({ formId }: { formId: string }) {
 	const { addElements } = useFormStepData();
@@ -26,7 +26,7 @@ function AddBlock({ formId }: { formId: string }) {
 			</DialogTrigger>
 			<DialogContent
 				className="overflow-y-auto max-h-[80%]"
-				style={{ width: "58%", maxWidth: "none" }}
+				style={{ width: "58%", maxWidth: "800px" }}
 			>
 				<DialogHeader>
 					<DialogTitle>Choose your block</DialogTitle>
@@ -60,7 +60,7 @@ function AddBlock({ formId }: { formId: string }) {
 									{makeFirstLetterUpperCase(selectedBlock)}
 								</h1>
 								<Image
-									className="w-full h-[300px] border-4 border-gray-300 rounded object-cover"
+									className="w-full h-[300px] border-4 border-gray-300 rounded "
 									src={ElementDefaultData[selectedBlock].thumbnail}
 									alt={selectedBlock}
 									width={400}

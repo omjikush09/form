@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { ElementType } from "./FormElements";
 import { useFormStepData } from "@/hook/useFormData";
 import { useFormContext } from "@/components/context/FormContext";
-import QuestionProperties from "./QuestionProperties";
+import PropertiesSetting from "@/components/PropertiesSetting";
 
 const type: ElementType = "TextField";
 
@@ -39,17 +39,18 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	const data = formData.find((data) => data.step == selectedStep);
 
 	return (
-		<div className="pt-5 px-2 bg-[#f2f4f7] h-full">
-			{/* Question Level Properties */}
-			<QuestionProperties
-				title={data?.title || ""}
-				description={data?.description || ""}
-				onTitleChange={(title) => changeFormData(selectedStep, "title", title)}
-				onDescriptionChange={(description) =>
-					changeFormData(selectedStep, "description", description)
-				}
-			/>
-		</div>
+		<PropertiesSetting
+			title={data?.title || ""}
+			description={data?.description || ""}
+			required={false}
+			onTitleChange={(title) => changeFormData(selectedStep, "title", title)}
+			onDescriptionChange={(description) =>
+				changeFormData(selectedStep, "description", description)
+			}
+			onRequiredChange={() => {}} // Not applicable for end step
+		>
+			{/* End Step - no additional properties needed */}
+		</PropertiesSetting>
 	);
 }
 
