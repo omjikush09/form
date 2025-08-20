@@ -82,7 +82,7 @@ function SortableStepItem({
 			}`}
 		>
 			{ElementDefaultData[data.type]?.icon}{" "}
-			<h1 className="truncate text-[12px]">{data.title}</h1>
+			<h1 className="truncate text-sm">{data.title}</h1>
 			{!(data.type == "START_STEP") && !(data.type == "END_STEP") && (
 				<div className="ml-auto">
 					<DropdownMenu>
