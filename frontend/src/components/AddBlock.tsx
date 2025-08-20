@@ -60,7 +60,7 @@ function AddBlock({ formId }: { formId: string }) {
 									{makeFirstLetterUpperCase(selectedBlock)}
 								</h1>
 								<Image
-									className="w-full h-[300px] border-4 border-gray-300 rounded "
+									className="w-full h-[300px] border-4 border-gray-300 rounded object-cover "
 									src={ElementDefaultData[selectedBlock].thumbnail}
 									alt={selectedBlock}
 									width={400}

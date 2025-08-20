@@ -78,9 +78,9 @@ function Build() {
 			{/* {JSON.stringify(formData)} */}
 			<div className="flex justify-between border-b-1 p-2">
 				<div className="flex justify-center items-center gap-4">
-					<IoMdArrowBack color="blue" size={40} />
+					<IoMdArrowBack color="blue" size={25} />
 					<Separator orientation="vertical" />
-					<h4 className="text-3xl">{formData.title}</h4>
+					<h4 className="text-xl">{formData.title}</h4>
 				</div>
 				<div className="px-5 py-1 border shadow-2xl hover:bg-gray-300 rounded cursor-pointer">
 					<div className="flex flex-col items-center">
@@ -104,10 +104,10 @@ function Build() {
 					</Tooltip>
 					<Tooltip>
 						<TooltipTrigger
-							className="flex gap-2 items-center bg-black rounded text-white p-2"
+							className="flex gap-2 items-center bg-black rounded text-white  px-4"
 							onClick={() => publishForm(formId)}
 						>
-							<IoRocketOutline color="white" /> Publish
+							<IoRocketOutline color="white" /> <span>Publish</span>
 						</TooltipTrigger>
 						<TooltipContent>
 							<p>Make your Changes live</p>
