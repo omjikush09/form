@@ -128,21 +128,21 @@ export default function FormAnswerProvider({
 
 				if (field.required && (!value || value.trim() === "")) {
 					errors.push({
-						field: field.id,
+						field: field.title,
 						message: `${field.title} is required`,
 					});
 				}
 
 				if (value && field.type === "email" && !validateEmail(value)) {
 					errors.push({
-						field: field.id,
+						field: field.title,
 						message: "Please enter a valid email address",
 					});
 				}
 
 				if (value && field.type === "tel" && !validatePhone(value)) {
 					errors.push({
-						field: field.id,
+						field: field.title,
 						message: "Please enter a valid phone number",
 					});
 				}
