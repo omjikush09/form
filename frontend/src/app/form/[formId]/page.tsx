@@ -2,14 +2,13 @@
 import { FormElement } from "@/components/FormElements/FormElements";
 import { FormAnswer, useFormAnswers } from "@/context/FormAnswerContext";
 import { useFormContext } from "@/context/FormContext";
-import { FormStepData } from "@/context/FormStepDataContext";
-import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/shadcn-io/spinner";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import api from "@/util/axios";
+import { validateQuestion, canProceedToNext } from "@/lib/validations/formAnswerValidation";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
+import type { ValidationError } from "@/lib/validations/formAnswerValidation";
 
 function Form() {
 	const { formId } = useParams<{ formId: string }>();
@@ -26,8 +25,7 @@ function Form() {
 		error: formContextError,
 	} = useFormContext();
 	const [currentStep, setCurrentStep] = useState(0);
-	const { setAnswers, submitAnswers, validateQuestion, canProceedToNext } =
-		useFormAnswers();
+	const { setAnswers, submitAnswers, getAnswer } = useFormAnswers();
 
 	const getQuestions = async (formId: string) => {
 		try {
@@ -56,10 +54,10 @@ function Form() {
 		// Validate current step before proceeding
 		if (
 			currentStepData &&
-			!canProceedToNext(currentStepData.id!, currentStepData)
+			!canProceedToNext(currentStepData.id!, currentStepData, getAnswer)
 		) {
-			const errors = validateQuestion(currentStepData.id!, currentStepData);
-			errors.forEach((error) => {
+			const errors = validateQuestion(currentStepData.id!, currentStepData, getAnswer);
+			errors.forEach((error: ValidationError) => {
 				if (error.field === "general") {
 					toast.error(error.message);
 				} else {
@@ -83,10 +81,10 @@ function Form() {
 		if (currentStep == formStepData.length - 2) {
 			if (
 				currentStepData &&
-				!canProceedToNext(currentStepData.id!, currentStepData)
+				!canProceedToNext(currentStepData.id!, currentStepData, getAnswer)
 			) {
-				const errors = validateQuestion(currentStepData.id!, currentStepData);
-				errors.forEach((error) => {
+				const errors = validateQuestion(currentStepData.id!, currentStepData, getAnswer);
+				errors.forEach((error: ValidationError) => {
 					if (error.field === "general") {
 						toast.error(error.message);
 					} else {

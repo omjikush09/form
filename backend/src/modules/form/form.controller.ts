@@ -10,10 +10,14 @@ import {
 	submitFormResponseService,
 } from "./form.service.js";
 import { validateFormResponses } from "./form.validations.js";
+import type { CreateFormRequest, DeleteFormRequest, GetFormByIdRequest, GetFormQuestionsRequest, GetFormsByUserRequest, PublishFormWithQuestionsRequest, SubmitFormResponseRequest, UpdateFormRequest } from "./from.types.js";
 
-export const createForm = async (req: Request, res: Response) => {
+export const createForm = async (
+	req: Request<CreateFormRequest["params"], unknown, CreateFormRequest["body"]>,
+	res: Response
+) => {
 	try {
-		const { userId, title, settings } = req.validatedBody;
+		const { userId, title, settings } = req.body;
 
 		const form = await createFormService(userId, title, settings);
 		res.status(201).json({
@@ -27,9 +31,16 @@ export const createForm = async (req: Request, res: Response) => {
 	}
 };
 
-export const getFormsByUser = async (req: Request, res: Response) => {
+export const getFormsByUser = async (
+	req: Request<
+		GetFormsByUserRequest["params"],
+		unknown,
+		GetFormsByUserRequest["body"]
+	>,
+	res: Response
+) => {
 	try {
-		const { userId } = req.validatedParams;
+		const { userId } = req.params;
 		const forms = await getFormsByUserService(userId);
 		res.json({
 			data: forms,
@@ -41,9 +52,16 @@ export const getFormsByUser = async (req: Request, res: Response) => {
 	}
 };
 
-export const getFormById = async (req: Request, res: Response) => {
+export const getFormById = async (
+	req: Request<
+		GetFormByIdRequest["params"],
+		unknown,
+		GetFormByIdRequest["body"]
+	>,
+	res: Response
+) => {
 	try {
-		const { formId } = req.validatedParams;
+		const { formId } = req.params;
 		const form = await getFormByIdService(formId);
 
 		if (!form) {
@@ -62,12 +80,25 @@ export const getFormById = async (req: Request, res: Response) => {
 	}
 };
 
-export const updateForm = async (req: Request, res: Response) => {
+export const updateForm = async (
+	req: Request<UpdateFormRequest["params"], unknown, UpdateFormRequest["body"]>,
+	res: Response
+) => {
 	try {
-		const { formId } = req.validatedParams;
-		const updates = req.validatedBody;
+		const { formId } = req.params;
+		const updates = req.body;
 
-		const form = await updateFormService(formId, updates);
+		// Transform the updates to match service expectations
+		const serviceUpdates: { title?: string; settings?: any; status?: string } =
+			{
+				...(updates.title !== undefined && { title: updates.title }),
+				...(updates.settings !== undefined && { settings: updates.settings }),
+				...(updates.description !== undefined && {
+					description: updates.description,
+				}),
+			};
+
+		const form = await updateFormService(formId, serviceUpdates);
 		res.json({
 			data: form,
 			message: "Form updated successfully",
@@ -79,9 +110,12 @@ export const updateForm = async (req: Request, res: Response) => {
 	}
 };
 
-export const deleteForm = async (req: Request, res: Response) => {
+export const deleteForm = async (
+	req: Request<DeleteFormRequest["params"], unknown, DeleteFormRequest["body"]>,
+	res: Response
+) => {
 	try {
-		const { formId } = req.validatedParams;
+		const { formId } = req.params;
 		await deleteFormService(formId);
 		res.json({
 			message: "Form deleted successfully",
@@ -93,9 +127,16 @@ export const deleteForm = async (req: Request, res: Response) => {
 	}
 };
 
-export const getFormQuestions = async (req: Request, res: Response) => {
+export const getFormQuestions = async (
+	req: Request<
+		GetFormQuestionsRequest["params"],
+		unknown,
+		GetFormQuestionsRequest["body"]
+	>,
+	res: Response
+) => {
 	try {
-		const { formId } = req.validatedParams;
+		const { formId } = req.params;
 		const questions = await getFormQuestionsService(formId);
 		res.json({
 			data: questions,
@@ -107,12 +148,35 @@ export const getFormQuestions = async (req: Request, res: Response) => {
 	}
 };
 
-export const publishFormWithQuestions = async (req: Request, res: Response) => {
+export const publishFormWithQuestions = async (
+	req: Request<
+		PublishFormWithQuestionsRequest["params"],
+		unknown,
+		PublishFormWithQuestionsRequest["body"]
+	>,
+	res: Response
+) => {
 	try {
-		const { formId } = req.validatedParams;
-		const { questions } = req.validatedBody;
-		console.log(req.validatedBody);
-		const result = await publishFormWithQuestionsService(formId, questions);
+		const { formId } = req.params;
+		const { questions } = req.body;
+
+		// Transform questions to match service expectations
+		const serviceQuestions = questions.map((q) => ({
+			...(q.id !== undefined && { id: q.id }),
+			type: q.type,
+			title: q.title || "",
+			description: q.description || "",
+			data: q.data,
+			step: q.step,
+			...(q.required !== undefined && { required: q.required }),
+			...(q.buttonText !== undefined &&
+				q.buttonText !== null && { buttonText: q.buttonText }),
+		}));
+
+		const result = await publishFormWithQuestionsService(
+			formId,
+			serviceQuestions
+		);
 		res.json({
 			data: result,
 			message: "Form published successfully with questions",
@@ -124,21 +188,32 @@ export const publishFormWithQuestions = async (req: Request, res: Response) => {
 	}
 };
 
-export const submitFormResponse = async (req: Request, res: Response) => {
+export const submitFormResponse = async (
+	req: Request<
+		SubmitFormResponseRequest["params"],
+		unknown,
+		SubmitFormResponseRequest["body"]
+	>,
+	res: Response
+) => {
 	try {
-		const { formId } = req.validatedParams;
-		const { answers } = req.validatedBody;
+		const { formId } = req.params;
+		const { answers } = req.body;
 
 		// Fetch form questions from the database
 		const formQuestions = await getFormQuestionsService(formId);
-		
+
 		// Filter out START_STEP and END_STEP questions for validation
 		const validatableQuestions = formQuestions.filter(
-			(question) => question.type !== "START_STEP" && question.type !== "END_STEP"
+			(question) =>
+				question.type !== "START_STEP" && question.type !== "END_STEP"
 		);
 
 		// Run validation with the fetched questions data
-		const validationErrors = validateFormResponses(validatableQuestions, answers);
+		const validationErrors = validateFormResponses(
+			validatableQuestions,
+			answers
+		);
 
 		// If there are validation errors, return them immediately
 		if (validationErrors.length > 0) {
