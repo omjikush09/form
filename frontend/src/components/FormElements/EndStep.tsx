@@ -1,15 +1,11 @@
 "use client";
 import React, { useState } from "react";
-import { ElementType } from "../../components/FormElements/FormElements";
 import { useFormStepData } from "@/context/FormStepDataContext";
 import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 
-const type: ElementType = "TextField";
-
 function FormComponet({
 	selectedStep,
-	disabled = false,
 }: {
 	selectedStep: number;
 	disabled: boolean;
@@ -35,7 +31,7 @@ function FormComponet({
 }
 
 function properTiesComponent({ selectedStep }: { selectedStep: number }) {
-	const { formStepData: formData, changeFormData } = useFormStepData();
+	const { formStepData: formData, changeQuestionProperty } = useFormStepData();
 	const data = formData.find((data) => data.step == selectedStep);
 
 	return (
@@ -43,9 +39,11 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 			title={data?.title || ""}
 			description={data?.description || ""}
 			required={false}
-			onTitleChange={(title) => changeFormData(selectedStep, "title", title)}
+			onTitleChange={(title) =>
+				changeQuestionProperty(selectedStep, "title", title)
+			}
 			onDescriptionChange={(description) =>
-				changeFormData(selectedStep, "description", description)
+				changeQuestionProperty(selectedStep, "description", description)
 			}
 			onRequiredChange={() => {}} // Not applicable for end step
 		>
@@ -54,4 +52,4 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	);
 }
 
-export default { FormComponet, properTiesComponent, type };
+export default { FormComponet, properTiesComponent };

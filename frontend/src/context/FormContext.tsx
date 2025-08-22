@@ -22,8 +22,6 @@ interface FormData {
 	description?: string;
 	status?: string;
 	settings: FormSettings;
-	createdAt?: Date;
-	updatedAt?: Date;
 }
 
 // Context Interface
@@ -47,7 +45,7 @@ const defaultSettings: FormSettings = {
 	answerColor: "#374151",
 	buttonColor: "#3b82f6",
 	buttonTextColor: "#ffffff",
-	fontFamily: "Inter"
+	fontFamily: "Inter",
 };
 
 // Default form data
@@ -56,8 +54,6 @@ const defaultFormData: FormData = {
 	title: "Untitled Form",
 	description: "",
 	settings: defaultSettings,
-	createdAt: new Date(),
-	updatedAt: new Date()
 };
 
 // Create Context
@@ -75,29 +71,29 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 		...initialData,
 		settings: {
 			...defaultSettings,
-			...initialData?.settings
-		}
+			...initialData?.settings,
+		},
 	});
 	const [loading, setLoading] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	const updateFormData = (updates: Partial<FormData>) => {
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
 			...updates,
-			updatedAt: new Date()
+			updatedAt: new Date(),
 		}));
 	};
 
 	const updateSettings = (settingsUpdates: Partial<FormSettings>) => {
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
 			settings: {
 				...prev.settings,
-				...settingsUpdates
+				...settingsUpdates,
 			},
-			updatedAt: new Date()
+			updatedAt: new Date(),
 		}));
 	};
 
@@ -107,7 +103,7 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 		try {
 			const response = await api.get(`/form/${formId}`);
 			const apiData = response.data.data;
-			
+
 			setFormData({
 				id: apiData.id,
 				title: apiData.title,
@@ -116,10 +112,8 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 				settings: {
 					...defaultSettings,
 					// If the API returns settings, merge them with defaults
-					...(apiData.settings || {})
+					...(apiData.settings || {}),
 				},
-				createdAt: apiData.createdAt ? new Date(apiData.createdAt) : new Date(),
-				updatedAt: apiData.updatedAt ? new Date(apiData.updatedAt) : new Date()
 			});
 		} catch (error) {
 			setError("Failed to load form data");
@@ -141,15 +135,15 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 			const updatePayload = {
 				title: formData.title,
 				description: formData.description,
-				settings: formData.settings
+				settings: formData.settings,
 			};
 
 			await api.put(`/form/${formData.id}`, updatePayload);
-			
+
 			// Update the updatedAt timestamp
-			setFormData(prev => ({
+			setFormData((prev) => ({
 				...prev,
-				updatedAt: new Date()
+				updatedAt: new Date(),
 			}));
 
 			toast("Form design saved successfully!");
@@ -174,14 +168,10 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 		updateSettings,
 		fetchFormData,
 		saveFormData,
-		resetForm
+		resetForm,
 	};
 
-	return (
-		<FormContext.Provider value={value}>
-			{children}
-		</FormContext.Provider>
-	);
+	return <FormContext.Provider value={value}>{children}</FormContext.Provider>;
 }
 
 // Custom Hook

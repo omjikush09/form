@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers } from "@/context/FormAnswerContext";
+import { useFormAnswers, getAnswerFromQuesitonId } from "@/context/FormAnswerContext";
 import { FiTrash2 } from "react-icons/fi";
 import { useFormContext } from "@/context/FormContext";
 import { Plus, GripVertical } from "lucide-react";
@@ -26,6 +26,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { v4 as uuidv4 } from "uuid";
+import { FormOption } from "@/config/data";
 
 // Sortable Option Item Component
 function SortableOptionItem({
@@ -34,7 +35,7 @@ function SortableOptionItem({
 	handleRemoveOption,
 	isLast,
 }: {
-	option: any;
+	option: FormOption;
 	updateOptionProperty: (
 		optionId: string,
 		property: string,
@@ -110,9 +111,9 @@ function FormComponet({
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
-	const answerData = answers.find(
-		(data) => data.questionId == formDataCurrent?.id
-	);
+	if (!formDataCurrent || formDataCurrent.type != "SINGLE_SELECT_OPTION")
+		return null;
+	const answerData = getAnswerFromQuesitonId(formDataCurrent?.id!, "SINGLE_SELECT_OPTION");
 
 	return (
 		<div className="flex flex-col gap-2">
@@ -121,17 +122,17 @@ function FormComponet({
 					className="text-4xl"
 					style={{ color: formData.settings.questionColor }}
 				>
-					{formDataCurrent?.title}
-					{formDataCurrent?.required && (
+					{formDataCurrent.title}
+					{formDataCurrent.required && (
 						<span className="text-red-500 ml-1">*</span>
 					)}
 				</h1>
 				<div style={{ color: formData.settings.descriptionColor }}>
-					{formDataCurrent?.description}
+					{formDataCurrent.description}
 				</div>
 				<div className="mt-4 flex flex-col gap-3">
-					{formDataCurrent?.data &&
-						formDataCurrent.data.options.map((option: any) => (
+					{formDataCurrent.data &&
+						formDataCurrent.data.options.map((option) => (
 							<label
 								key={option.id}
 								className="flex items-center gap-3 cursor-pointer"
@@ -139,7 +140,7 @@ function FormComponet({
 								<input
 									type="checkbox"
 									disabled={disabled}
-									checked={answerData?.answer === option.value}
+									checked={answerData === option.value}
 									onChange={(e) => {
 										if (e.target.checked) {
 											setAnswer(
@@ -177,7 +178,7 @@ function FormComponet({
 					}}
 					onClick={buttonOnClink}
 				>
-					{formDataCurrent?.buttonText}
+					{formDataCurrent.buttonText}
 				</Button>
 			</div>
 		</div>
@@ -202,16 +203,19 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	);
 	const data = formData.find((data) => data.step == selectedStep);
 
-	if (!data) return null;
+	if (!data || data.type != "SINGLE_SELECT_OPTION") return null;
 
-	const updateQuestionProperty = (property: string, value: any) => {
+	const updateQuestionProperty = (
+		property: string,
+		value: string | boolean | {}
+	) => {
 		changeQuestionProperty(selectedStep, property, value);
 	};
 
 	const updateOptionProperty = (
 		optionId: string,
 		property: string,
-		value: any
+		value: string | boolean
 	) => {
 		updateOption(selectedStep, optionId, property, value);
 	};
@@ -238,14 +242,13 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	}
 
 	// Create items array for SortableContext
-	const sortableItems =
-		data.data?.options?.map((option: any) => option.id) || [];
+	const sortableItems = data.data.options.map((option) => option.id) || [];
 
 	return (
 		<PropertiesSetting
-			title={data?.title || ""}
-			description={data?.description || ""}
-			required={data?.required || false}
+			title={data.title || ""}
+			description={data.description || ""}
+			required={data.required || false}
 			onTitleChange={(title) => updateQuestionProperty("title", title)}
 			onDescriptionChange={(description) =>
 				updateQuestionProperty("description", description)
@@ -262,7 +265,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 					<Input
 						id="buttonText"
 						type="text"
-						value={data?.buttonText || ""}
+						value={data.buttonText || ""}
 						onChange={(e) =>
 							updateQuestionProperty("buttonText", e.target.value)
 						}
@@ -299,7 +302,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 								items={sortableItems}
 								strategy={verticalListSortingStrategy}
 							>
-								{data.data?.options?.map((option: any, index: number) => (
+								{data.data.options.map((option, index: number) => (
 									<SortableOptionItem
 										key={option.id}
 										option={option}

@@ -56,9 +56,13 @@ const longTextDataSchema = z.object({
 });
 
 // Helper function to format Zod errors
-const formatZodErrors = (zodErrors: any[], fieldPrefix = "general"): ValidationError[] => {
+const formatZodErrors = (
+	zodErrors: any[],
+	fieldPrefix = "general"
+): ValidationError[] => {
 	return zodErrors.map((error) => ({
-		field: error.path && error.path.length > 0 ? error.path.join(".") : fieldPrefix,
+		field:
+			error.path && error.path.length > 0 ? error.path.join(".") : fieldPrefix,
 		message: error.message,
 	}));
 };
@@ -103,7 +107,9 @@ export const validateContactInfo = (
 			}
 
 			if (fieldValue && field.type === "email") {
-				const emailResult = z.string().email({ message: "Please enter a valid email address" }).safeParse(fieldValue);
+				const emailResult = z
+					.email("Please enter a valid email address")
+					.safeParse(fieldValue);
 				if (!emailResult.success) {
 					errors.push({
 						field: field.title || "general",
@@ -155,7 +161,8 @@ export const validateMultiSelect = (
 		}
 
 		const selectedOptions = answerResult.data;
-		const { selectionType, minSelections, maxSelections, fixedSelections } = dataResult.data;
+		const { selectionType, minSelections, maxSelections, fixedSelections } =
+			dataResult.data;
 
 		// Validate selection constraints
 		if (selectionType === "fixed" && fixedSelections) {
@@ -360,16 +367,21 @@ export const validateQuestion = (
 	const answer = getAnswer(questionId);
 
 	// Check if answer exists for required questions
-	const isEmpty = answer === null || answer === undefined || 
-		answer.answer === null || answer.answer === undefined || 
-		answer.answer === "" || 
+	const isEmpty =
+		answer === null ||
+		answer === undefined ||
+		answer.answer === null ||
+		answer.answer === undefined ||
+		answer.answer === "" ||
 		(Array.isArray(answer.answer) && answer.answer.length === 0) ||
-		(typeof answer.answer === "object" && answer.answer !== null && Object.keys(answer.answer).length === 0);
+		(typeof answer.answer === "object" &&
+			answer.answer !== null &&
+			Object.keys(answer.answer).length === 0);
 
 	if (questionData.required && isEmpty) {
 		errors.push({
 			field: "general",
-			message: "This field is required"
+			message: "This field is required",
 		});
 		return errors;
 	}
@@ -380,8 +392,9 @@ export const validateQuestion = (
 	}
 
 	// Get the specific validation function for this question type
-	const validationFunction = validationFunctions[questionData.type as keyof typeof validationFunctions];
-	
+	const validationFunction =
+		validationFunctions[questionData.type as keyof typeof validationFunctions];
+
 	if (validationFunction) {
 		// Call the specific validation function
 		const validationErrors = validationFunction(answer.answer, questionData);

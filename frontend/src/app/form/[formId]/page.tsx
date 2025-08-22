@@ -112,27 +112,24 @@ function Form() {
 			(data) => data.type != "START_STEP" && data.type != "END_STEP"
 		);
 		const ans: FormAnswer[] = filteredData.map((data) => {
-			if (data.type == "CONTACT_INFO") {
+			if (data.type == "CONTACT_INFO" || data.type == "ADDRESS") {
 				const answers: Record<string, { title: string; value: string }> = {};
-				data.data.fields.forEach(
-					(data: any) => (answers[data.id] = { value: "", title: data.title })
-				);
+				data.data.fields
+					.filter((field) => field.display === true)
+					.forEach(
+						(field) => (answers[field.id] = { value: "", title: field.title })
+					);
 				return {
 					questionId: data.id!,
+					questionType: data.type,
 					answer: answers,
 				};
 			}
-			if (data.type == "ADDRESS") {
-				const answers: Record<string, { title: string; value: string }> = {};
-				data.data.fields.forEach(
-					(data: any) => (answers[data.id] = { value: "", title: data.title })
-				);
-				return {
-					questionId: data.id!,
-					answer: answers,
-				};
-			}
-			return { questionId: data.id!, answer: "" };
+			return { 
+				questionId: data.id!, 
+				questionType: data.type,
+				answer: "" 
+			};
 		});
 		setAnswers(ans);
 	}, [formStepData]);

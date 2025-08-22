@@ -12,7 +12,6 @@ import NumberFormElement from "./NumberFormElement";
 import StatementFormElement from "./StatementFormElement";
 import URLFormElement from "./URLFormElement";
 import DropdownFormElement from "./DropdownFormElement";
-export type ElementType = "TextField";
 
 export type FormElement = {
 	FormComponet: React.FC<{

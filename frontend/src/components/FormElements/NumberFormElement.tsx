@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers } from "@/context/FormAnswerContext";
+import { useFormAnswers, getAnswerFromQuesitonId } from "@/context/FormAnswerContext";
 import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,8 @@ function FormComponet({
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
-	const answerData = answers.find(
-		(data) => data.questionId == formDataCurrent?.id
-	);
+	if (!formDataCurrent || formDataCurrent.type != "NUMBER") return null;
+	const answerData = getAnswerFromQuesitonId(formDataCurrent.id!, "NUMBER");
 
 	return (
 		<div className=" flex flex-col gap-2 ">
@@ -34,33 +33,33 @@ function FormComponet({
 					className="text-4xl"
 					style={{ color: formData.settings.questionColor }}
 				>
-					{formDataCurrent?.title}
-					{formDataCurrent?.required && (
+					{formDataCurrent.title}
+					{formDataCurrent.required && (
 						<span className="text-red-500 ml-1">*</span>
 					)}
 				</h1>
 				<div style={{ color: formData.settings.descriptionColor }}>
-					{formDataCurrent?.description}
+					{formDataCurrent.description}
 				</div>
 				<input
-					type="number"
-					disabled={disabled}
-					min={formDataCurrent?.data?.minValue || undefined}
-					max={formDataCurrent?.data?.maxValue || undefined}
-					style={
-						{
-							"--placeholder-color": formData.settings.answerColor,
-							color: formData.settings.answerColor,
-							borderColor: formData.settings.answerColor,
-						} as React.CSSProperties
-					}
-					placeholder={formDataCurrent?.data?.placeholder}
-					className="border-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] p-3 mb-4"
-					value={answerData?.answer || ""}
-					onChange={(e) =>
-						setAnswer(formDataCurrent?.id!, "NUMBER", e.target.value)
-					}
-				/>
+						type="number"
+						disabled={disabled}
+						min={formDataCurrent.data.minValue || undefined}
+						max={formDataCurrent.data.maxValue || undefined}
+						style={
+							{
+								"--placeholder-color": formData.settings.answerColor,
+								color: formData.settings.answerColor,
+								borderColor: formData.settings.answerColor,
+							} as React.CSSProperties
+						}
+						placeholder={formDataCurrent.data.placeholder}
+						className="border-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] p-3 mb-4"
+						value={answerData ?? ""}
+						onChange={(e) =>
+							setAnswer(formDataCurrent?.id!, "NUMBER", e.target.value)
+						}
+					/>
 
 				<Button
 					disabled={isSubmitting}
@@ -81,22 +80,21 @@ function FormComponet({
 function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	const { formStepData, changeQuestionProperty } = useFormStepData();
 	const data = formStepData.find((data) => data.step == selectedStep);
-
-	const updateQuestionProperty = (property: string, value: any) => {
-		changeQuestionProperty(selectedStep, property, value);
-	};
+	if (!data || data.type != "NUMBER") return;
 
 	return (
 		<PropertiesSetting
 			title={data?.title || ""}
 			description={data?.description || ""}
 			required={data?.required || false}
-			onTitleChange={(title) => updateQuestionProperty("title", title)}
+			onTitleChange={(title) =>
+				changeQuestionProperty(selectedStep, "title", title)
+			}
 			onDescriptionChange={(description) =>
-				updateQuestionProperty("description", description)
+				changeQuestionProperty(selectedStep, "description", description)
 			}
 			onRequiredChange={(required) =>
-				updateQuestionProperty("required", required)
+				changeQuestionProperty(selectedStep, "required", required)
 			}
 		>
 			{/* Number specific properties */}
@@ -109,7 +107,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						type="text"
 						value={data?.data?.placeholder || ""}
 						onChange={(e) =>
-							updateQuestionProperty("data", {
+							changeQuestionProperty(selectedStep, "data", {
 								...data?.data,
 								placeholder: e.target.value,
 							})
@@ -126,7 +124,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						type="text"
 						value={data?.buttonText || ""}
 						onChange={(e) =>
-							updateQuestionProperty("buttonText", e.target.value)
+							changeQuestionProperty(selectedStep, "buttonText", e.target.value)
 						}
 						placeholder="Enter button text"
 					/>
@@ -140,7 +138,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						type="number"
 						value={data?.data?.minValue || ""}
 						onChange={(e) =>
-							updateQuestionProperty("data", {
+							changeQuestionProperty(selectedStep, "data", {
 								...data?.data,
 								minValue: e.target.value
 									? parseFloat(e.target.value)
@@ -159,7 +157,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						type="number"
 						value={data?.data?.maxValue || ""}
 						onChange={(e) =>
-							updateQuestionProperty("data", {
+							changeQuestionProperty(selectedStep, "data", {
 								...data?.data,
 								maxValue: e.target.value
 									? parseFloat(e.target.value)

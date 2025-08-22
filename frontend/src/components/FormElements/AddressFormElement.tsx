@@ -1,16 +1,13 @@
 "use client";
 import React, { useState } from "react";
-import { ElementType } from "../../components/FormElements/FormElements";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers } from "@/context/FormAnswerContext";
+import { useFormAnswers, getAnswerFromQuesitonId } from "@/context/FormAnswerContext";
 import { Eye, EyeOff, Settings } from "lucide-react";
 import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
-const type: ElementType = "TextField";
 
 function FormComponet({
 	selectedStep,
@@ -27,9 +24,8 @@ function FormComponet({
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
-	const answerData = answers.find(
-		(data) => data.questionId == formDataCurrent?.id
-	);
+	if (!formDataCurrent || formDataCurrent.type != "ADDRESS") return null;
+	const answerData = getAnswerFromQuesitonId(formDataCurrent.id!, "ADDRESS");
 
 	return (
 		<div className=" flex flex-col gap-2">
@@ -38,51 +34,50 @@ function FormComponet({
 					className="text-4xl"
 					style={{ color: formData.settings.questionColor }}
 				>
-					{formDataCurrent?.title}
+					{formDataCurrent.title}
 				</h1>
 				<div style={{ color: formData.settings.descriptionColor }}>
-					{formDataCurrent?.description}
+					{formDataCurrent.description}
 				</div>
 				<div className="grid grid-cols-2 gap-2">
-					{formDataCurrent?.data &&
-						formDataCurrent.data.fields
-							.filter((data: any) => data.display === true)
-							.map((data: any) => {
-								return (
-									<label key={data.id} className="flex flex-col gap-2">
-										<div style={{ color: formData.settings.questionColor }}>
-											{data.title}
-											{data.required && (
-												<span className="text-red-500 text-sm">*</span>
-											)}
-										</div>
-										<input
-											disabled={disabled}
-											className="focus:outline-none border-b-2 border-solid"
-											required={data.required}
-											type={data.type}
-											style={
-												{
-													"--placeholder-color": formData.settings.answerColor,
-													color: formData.settings.answerColor,
-													borderColor: formData.settings.answerColor,
-												} as React.CSSProperties
-											}
-											placeholder={data.placeholder}
-											name={data.id}
-											value={answerData?.answer[data.id]?.value || ""}
-											onChange={(e) =>
-												setAnswer(
-													formDataCurrent?.id!,
-													"ADDRESS",
-													e.target.value,
-													data.id
-												)
-											}
-										/>
-									</label>
-								);
-							})}
+					{formDataCurrent.data.fields
+						.filter((data) => data.display === true)
+						.map((data) => {
+							return (
+								<label key={data.id} className="flex flex-col gap-2">
+									<div style={{ color: formData.settings.questionColor }}>
+										{data.title}
+										{data.required && (
+											<span className="text-red-500 text-sm">*</span>
+										)}
+									</div>
+									<input
+										disabled={disabled}
+										className="focus:outline-none border-b-2 border-solid"
+										required={data.required}
+										type={data.type}
+										style={
+											{
+												"--placeholder-color": formData.settings.answerColor,
+												color: formData.settings.answerColor,
+												borderColor: formData.settings.answerColor,
+											} as React.CSSProperties
+										}
+										placeholder={data.placeholder}
+										name={data.id}
+										value={answerData?.[data.id]?.value ?? ""}
+										onChange={(e) =>
+											setAnswer(
+												formDataCurrent?.id!,
+												"ADDRESS",
+												e.target.value,
+												data.id
+											)
+										}
+									/>
+								</label>
+							);
+						})}
 				</div>
 
 				<Button
@@ -94,7 +89,7 @@ function FormComponet({
 					}}
 					onClick={buttonOnClink}
 				>
-					{formDataCurrent?.buttonText ?? "Next"}
+					{formDataCurrent.buttonText}
 				</Button>
 			</div>
 		</div>
@@ -110,30 +105,34 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	const [openSettings, setOpenSettings] = useState<string | null>(null);
 	const data = formData.find((data) => data.step == selectedStep);
 
-	if (!data) return null;
+	if (!data || data.type != "ADDRESS") return null;
 
-	const updateQuestionProperty = (property: string, value: any) => {
+	const updateQuestionProperty = (
+		property: string,
+		value: string | boolean
+	) => {
 		changeQuestionProperty(selectedStep, property, value);
 	};
 
 	const updateFieldProperty = (
 		fieldId: string,
 		property: string,
-		value: any
+		value: string | boolean
 	) => {
 		changeFieldProperty(selectedStep, fieldId, property, value);
 	};
 
 	const toggleFieldDisplay = (fieldId: string) => {
-		const field = data.data.fields.find((f: any) => f.id === fieldId);
+		const field = data.data.fields.find((f) => f.id === fieldId);
+		if (!field) return;
 		updateFieldProperty(fieldId, "display", !field.display);
 	};
 
 	return (
 		<PropertiesSetting
-			title={data?.title || ""}
-			description={data?.description || ""}
-			required={data?.required || false}
+			title={data.title || ""}
+			description={data.description || ""}
+			required={data.required || false}
 			onTitleChange={(title) => updateQuestionProperty("title", title)}
 			onDescriptionChange={(description) =>
 				updateQuestionProperty("description", description)
@@ -150,7 +149,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 					<Input
 						id="buttonText"
 						type="text"
-						value={data?.buttonText || ""}
+						value={data.buttonText || ""}
 						onChange={(e) =>
 							updateQuestionProperty("buttonText", e.target.value)
 						}
@@ -163,7 +162,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 					<h4 className="text-sm font-medium text-muted-foreground">
 						Address Fields
 					</h4>
-					{data.data?.fields?.map((field: any) => (
+					{data.data.fields.map((field) => (
 						<div key={field.id}>
 							{/* Field Header */}
 							<div className="flex items-center justify-between mt-4">
@@ -268,4 +267,4 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	);
 }
 
-export default { FormComponet, properTiesComponent, type };
+export default { FormComponet, properTiesComponent };

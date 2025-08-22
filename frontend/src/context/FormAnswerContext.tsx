@@ -11,17 +11,48 @@ import {
 } from "react";
 import { toast } from "sonner";
 
-export type FormAnswer = {
+// Define specific answer types for each form element type
+type ShortTextAnswer = string;
+type LongTextAnswer = string;
+type NumberAnswer = string;
+type DateAnswer = string;
+type URLAnswer = string;
+type StatementAnswer = never; // Statement doesn't have answers
+type SingleSelectAnswer = string;
+type MultiSelectAnswer = string[];
+type DropdownAnswer = string;
+type ContactInfoAnswer = Record<string, { title: string; value: string }>;
+type AddressAnswer = Record<string, { title: string; value: string }>;
+
+// Map each form element type to its answer type
+type AnswerType = {
+	SHORT_TEXT: ShortTextAnswer;
+	LONG_TEXT: LongTextAnswer;
+	NUMBER: NumberAnswer;
+	DATE: DateAnswer;
+	URL: URLAnswer;
+	STATEMENT: StatementAnswer;
+	SINGLE_SELECT_OPTION: SingleSelectAnswer;
+	MULTI_SELECT_OPTION: MultiSelectAnswer;
+	DROPDOWN: DropdownAnswer;
+	CONTACT_INFO: ContactInfoAnswer;
+	ADDRESS: AddressAnswer;
+};
+
+export type FormAnswer<T extends AddElementFromType = AddElementFromType> = {
 	questionId: string;
-	answer: any;
+	questionType: T;
+	answer: AnswerType[T];
 };
 
 type FormAnswerContextType = {
 	answers: FormAnswer[];
-	setAnswer: (
+	setAnswer: <T extends AddElementFromType>(
 		questionId: string,
-		questionType: AddElementFromType,
-		answer: any,
+		questionType: T,
+		answer: T extends "CONTACT_INFO" | "ADDRESS" 
+			? AnswerType[T] | string
+			: AnswerType[T],
 		id?: string
 	) => void;
 	getAnswer: (questionId: string) => FormAnswer | undefined;
@@ -41,6 +72,19 @@ export const useFormAnswers = () => {
 	return context;
 };
 
+// Generic hook for type-safe answer retrieval
+export const getAnswerFromQuesitonId = <T extends AddElementFromType>(
+	questionId: string,
+	questionType: T
+): AnswerType[T] | undefined => {
+	const { answers } = useFormAnswers();
+	const answer = answers.find((a) => a.questionId === questionId);
+	if (answer?.questionType === questionType) {
+		return answer.answer as AnswerType[T];
+	}
+	return undefined;
+};
+
 export default function FormAnswerProvider({
 	children,
 }: {
@@ -49,26 +93,47 @@ export default function FormAnswerProvider({
 	const [answers, setAnswers] = useState<FormAnswer[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const setAnswer = (
+	const setAnswer = <T extends AddElementFromType>(
 		questionId: string,
-		questionType: AddElementFromType,
-		answer: any,
+		questionType: T,
+		answer: T extends "CONTACT_INFO" | "ADDRESS" 
+			? AnswerType[T] | string
+			: AnswerType[T],
 		id?: string
 	) => {
 		setAnswers((prev) => {
 			const existingIndex = prev.findIndex((a) => a.questionId === questionId);
-			const newAnswer: FormAnswer = {
-				questionId,
-				answer,
-			};
+			
+			// Handle field updates for CONTACT_INFO and ADDRESS
 			if (
-				(questionType == "CONTACT_INFO" || questionType == "ADDRESS") &&
-				id != undefined
+				(questionType === "CONTACT_INFO" || questionType === "ADDRESS") &&
+				id !== undefined
 			) {
 				const updated = [...prev];
-				updated[existingIndex].answer[id].value = answer;
+				if (existingIndex >= 0) {
+					const existingAnswer = updated[existingIndex];
+					if (
+						existingAnswer.questionType === "CONTACT_INFO" ||
+						existingAnswer.questionType === "ADDRESS"
+					) {
+						const answerRecord = existingAnswer.answer as Record<
+							string,
+							{ title: string; value: string }
+						>;
+						if (answerRecord[id]) {
+							answerRecord[id].value = answer as string;
+						}
+					}
+				}
 				return updated;
 			}
+
+			// Handle normal answer updates
+			const newAnswer: FormAnswer<T> = {
+				questionId,
+				questionType,
+				answer: answer as AnswerType[T],
+			};
 
 			if (existingIndex >= 0) {
 				const updated = [...prev];

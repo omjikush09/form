@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers } from "@/context/FormAnswerContext";
+import { useFormAnswers, getAnswerFromQuesitonId } from "@/context/FormAnswerContext";
 import { FiTrash2 } from "react-icons/fi";
 import { useFormContext } from "@/context/FormContext";
 import { Plus, GripVertical } from "lucide-react";
@@ -33,6 +33,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { v4 as uuidv4 } from "uuid";
+import { FormOption } from "@/config/data";
 
 // Sortable Option Item Component
 function SortableOptionItem({
@@ -41,7 +42,7 @@ function SortableOptionItem({
 	handleRemoveOption,
 	isLast,
 }: {
-	option: any;
+	option: FormOption;
 	updateOptionProperty: (
 		optionId: string,
 		property: string,
@@ -117,17 +118,17 @@ function FormComponet({
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
-	const answerData = answers.find(
-		(data) => data.questionId == formDataCurrent?.id
-	);
+	if (!formDataCurrent || formDataCurrent.type != "MULTI_SELECT_OPTION")
+		return null;
+	const answerData = getAnswerFromQuesitonId(formDataCurrent.id!, "MULTI_SELECT_OPTION");
 
 	// Handle multi-select checkbox changes
 	const handleCheckboxChange = (optionValue: string, checked: boolean) => {
-		const currentAnswers = answerData?.answer || [];
-		const selectionType = formDataCurrent?.data?.selectionType || "unlimited";
-		const minSelections = formDataCurrent?.data?.minSelections || 0;
-		const maxSelections = formDataCurrent?.data?.maxSelections || null;
-		const fixedSelections = formDataCurrent?.data?.fixedSelections || null;
+		const currentAnswers = answerData ?? [];
+		const selectionType = formDataCurrent.data.selectionType || "unlimited";
+		const minSelections = formDataCurrent.data.minSelections || 0;
+		const maxSelections = formDataCurrent.data.maxSelections || null;
+		const fixedSelections = formDataCurrent.data.fixedSelections || null;
 		let newAnswers;
 
 		if (checked) {
@@ -176,15 +177,15 @@ function FormComponet({
 					className="text-4xl"
 					style={{ color: formData.settings.questionColor }}
 				>
-					{formDataCurrent?.title}
-					{formDataCurrent?.required && (
+					{formDataCurrent.title}
+					{formDataCurrent.required && (
 						<span className="text-red-500 ml-1">*</span>
 					)}
 				</h1>
 				<div style={{ color: formData.settings.descriptionColor }}>
-					{formDataCurrent?.description}
+					{formDataCurrent.description}
 				</div>
-				{formDataCurrent?.data?.selectionType &&
+				{formDataCurrent.data.selectionType &&
 					formDataCurrent.data.selectionType !== "unlimited" && (
 						<div className="mt-2 text-sm text-gray-600">
 							{formDataCurrent.data.selectionType === "fixed" &&
@@ -192,9 +193,9 @@ function FormComponet({
 									<>
 										Please select exactly {formDataCurrent.data.fixedSelections}{" "}
 										option(s)
-										{answerData?.answer?.length && (
+										{answerData?.length && (
 											<span className="ml-1">
-												({answerData.answer.length}/
+												({answerData.length}/
 												{formDataCurrent.data.fixedSelections} selected)
 											</span>
 										)}
@@ -204,9 +205,9 @@ function FormComponet({
 								<>
 									Select {formDataCurrent.data.minSelections || 0} to{" "}
 									{formDataCurrent.data.maxSelections || "unlimited"} option(s)
-									{answerData?.answer?.length && (
+									{answerData?.length && (
 										<span className="ml-1">
-											({answerData.answer.length} selected)
+											({answerData.length} selected)
 										</span>
 									)}
 								</>
@@ -214,30 +215,29 @@ function FormComponet({
 						</div>
 					)}
 				<div className="mt-4 flex flex-col gap-3">
-					{formDataCurrent?.data &&
-						formDataCurrent.data.options.map((option: any) => (
-							<label
-								key={option.id}
-								className="flex items-center gap-3 cursor-pointer"
-							>
-								<input
-									type="checkbox"
-									disabled={disabled}
-									checked={answerData?.answer?.includes(option.value) || false}
-									onChange={(e) =>
-										handleCheckboxChange(option.value, e.target.checked)
-									}
-									className="w-5 h-5 rounded border-2"
-									style={{
-										accentColor: formData.settings.answerColor,
-										borderColor: formData.settings.answerColor,
-									}}
-								/>
-								<span style={{ color: formData.settings.answerColor }}>
-									{option.label}
-								</span>
-							</label>
-						))}
+					{formDataCurrent.data.options.map((option) => (
+						<label
+							key={option.id}
+							className="flex items-center gap-3 cursor-pointer"
+						>
+							<input
+								type="checkbox"
+								disabled={disabled}
+								checked={answerData?.includes(option.value) ?? false}
+								onChange={(e) =>
+									handleCheckboxChange(option.value, e.target.checked)
+								}
+								className="w-5 h-5 rounded border-2"
+								style={{
+									accentColor: formData.settings.answerColor,
+									borderColor: formData.settings.answerColor,
+								}}
+							/>
+							<span style={{ color: formData.settings.answerColor }}>
+								{option.label}
+							</span>
+						</label>
+					))}
 				</div>
 
 				<Button
@@ -249,7 +249,7 @@ function FormComponet({
 					}}
 					onClick={buttonOnClink}
 				>
-					{formDataCurrent?.buttonText}
+					{formDataCurrent.buttonText}
 				</Button>
 			</div>
 		</div>
@@ -274,16 +274,19 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	);
 	const data = formData.find((data) => data.step == selectedStep);
 
-	if (!data) return null;
+	if (!data || data.type != "MULTI_SELECT_OPTION") return null;
 
-	const updateQuestionProperty = (property: string, value: any) => {
+	const updateQuestionProperty = (
+		property: string,
+		value: string | boolean | {}
+	) => {
 		changeQuestionProperty(selectedStep, property, value);
 	};
 
 	const updateOptionProperty = (
 		optionId: string,
 		property: string,
-		value: any
+		value: string | boolean
 	) => {
 		updateOption(selectedStep, optionId, property, value);
 	};
@@ -310,14 +313,13 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	}
 
 	// Create items array for SortableContext
-	const sortableItems =
-		data.data?.options?.map((option: any) => option.id) || [];
+	const sortableItems = data.data.options.map((option) => option.id) || [];
 
 	return (
 		<PropertiesSetting
-			title={data?.title || ""}
-			description={data?.description || ""}
-			required={data?.required || false}
+			title={data.title || ""}
+			description={data.description || ""}
+			required={data.required || false}
 			onTitleChange={(title) => updateQuestionProperty("title", title)}
 			onDescriptionChange={(description) =>
 				updateQuestionProperty("description", description)
@@ -334,7 +336,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 					<Input
 						id="buttonText"
 						type="text"
-						value={data?.buttonText || ""}
+						value={data.buttonText || ""}
 						onChange={(e) =>
 							updateQuestionProperty("buttonText", e.target.value)
 						}
@@ -346,10 +348,10 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 				<div className="space-y-2">
 					<Label htmlFor="selectionType">Selection Type</Label>
 					<Select
-						value={data?.data?.selectionType || "unlimited"}
+						value={data.data.selectionType || "unlimited"}
 						onValueChange={(value) =>
 							updateQuestionProperty("data", {
-								...data?.data,
+								...data.data,
 								selectionType: value,
 								// Reset other values when changing type
 								minSelections: undefined,
@@ -370,7 +372,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 				</div>
 
 				{/* Fixed Selection Controls */}
-				{data?.data?.selectionType === "fixed" && (
+				{data.data.selectionType === "fixed" && (
 					<div className="space-y-2">
 						<Label htmlFor="fixedSelections">
 							Number of selections required
@@ -379,10 +381,10 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 							id="fixedSelections"
 							type="number"
 							min={1}
-							value={data?.data?.fixedSelections || ""}
+							value={data.data.fixedSelections || ""}
 							onChange={(e) =>
 								updateQuestionProperty("data", {
-									...data?.data,
+									...data.data,
 									fixedSelections: parseInt(e.target.value) || 1,
 								})
 							}
@@ -392,7 +394,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 				)}
 
 				{/* Range Selection Controls */}
-				{data?.data?.selectionType === "range" && (
+				{data.data.selectionType === "range" && (
 					<>
 						<div className="space-y-2">
 							<Label htmlFor="minSelections">Minimum selections</Label>
@@ -400,10 +402,10 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 								id="minSelections"
 								type="number"
 								min={0}
-								value={data?.data?.minSelections || ""}
+								value={data.data.minSelections || ""}
 								onChange={(e) =>
 									updateQuestionProperty("data", {
-										...data?.data,
+										...data.data,
 										minSelections: parseInt(e.target.value) || 0,
 									})
 								}
@@ -416,10 +418,10 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 								id="maxSelections"
 								type="number"
 								min={1}
-								value={data?.data?.maxSelections || ""}
+								value={data.data.maxSelections || ""}
 								onChange={(e) =>
 									updateQuestionProperty("data", {
-										...data?.data,
+										...data.data,
 										maxSelections: parseInt(e.target.value) || null,
 									})
 								}
@@ -458,7 +460,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 								items={sortableItems}
 								strategy={verticalListSortingStrategy}
 							>
-								{data.data?.options?.map((option: any, index: number) => (
+								{data.data.options.map((option, index: number) => (
 									<SortableOptionItem
 										key={option.id}
 										option={option}

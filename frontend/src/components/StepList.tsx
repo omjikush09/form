@@ -1,7 +1,7 @@
 "use client";
 import { ElementDefaultData } from "@/config/data";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { FormStepData } from "@/context/FormStepDataContext";
+import { FormElementConfig } from "@/context/FormStepDataContext";
 import React, { Dispatch, SetStateAction } from "react";
 import { HiOutlineDotsVertical } from "react-icons/hi";
 import {
@@ -36,7 +36,7 @@ function SortableStepItem({
 	setSelectedQuestions,
 	removeStep,
 }: {
-	data: FormStepData;
+	data: FormElementConfig;
 	selectedQuestions: number;
 	setSelectedQuestions: Dispatch<SetStateAction<number>>;
 	removeStep: (step: number) => void;

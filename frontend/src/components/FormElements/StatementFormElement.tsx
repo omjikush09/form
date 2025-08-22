@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 
 function FormComponet({
 	selectedStep,
-	disabled = false,
 	buttonOnClink = () => {},
 }: {
 	selectedStep: number;
@@ -19,11 +18,12 @@ function FormComponet({
 	buttonOnClink?: () => void;
 }) {
 	const { formStepData } = useFormStepData();
-	const { answers, setAnswer, isSubmitting } = useFormAnswers();
+	const { isSubmitting } = useFormAnswers();
 	const { formData } = useFormContext();
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
+	if (!formDataCurrent || formDataCurrent.type != "STATEMENT") return null;
 
 	return (
 		<div className=" flex flex-col gap-2 ">
@@ -32,10 +32,10 @@ function FormComponet({
 					className="text-4xl"
 					style={{ color: formData.settings.questionColor }}
 				>
-					{formDataCurrent?.title}
+					{formDataCurrent.title}
 				</h1>
 				<div style={{ color: formData.settings.descriptionColor }}>
-					{formDataCurrent?.description}
+					{formDataCurrent.description}
 				</div>
 
 				<Button
@@ -47,7 +47,7 @@ function FormComponet({
 					}}
 					onClick={buttonOnClink}
 				>
-					{formDataCurrent?.buttonText}
+					{formDataCurrent.buttonText}
 				</Button>
 			</div>
 		</div>
@@ -57,16 +57,20 @@ function FormComponet({
 function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	const { formStepData, changeQuestionProperty } = useFormStepData();
 	const data = formStepData.find((data) => data.step == selectedStep);
+	if (!data || data.type != "STATEMENT") return;
 
-	const updateQuestionProperty = (property: string, value: any) => {
+	const updateQuestionProperty = (
+		property: string,
+		value: string | boolean
+	) => {
 		changeQuestionProperty(selectedStep, property, value);
 	};
 
 	return (
 		<PropertiesSetting
-			title={data?.title || ""}
-			description={data?.description || ""}
-			required={data?.required || false}
+			title={data.title}
+			description={data.description}
+			required={data.required || false}
 			onTitleChange={(title) => updateQuestionProperty("title", title)}
 			onDescriptionChange={(description) =>
 				updateQuestionProperty("description", description)
@@ -83,7 +87,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 					<Input
 						id="buttonText"
 						type="text"
-						value={data?.buttonText || ""}
+						value={data.buttonText || ""}
 						onChange={(e) =>
 							updateQuestionProperty("buttonText", e.target.value)
 						}

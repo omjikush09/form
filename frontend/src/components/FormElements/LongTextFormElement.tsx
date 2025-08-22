@@ -1,8 +1,10 @@
 "use client";
-import React, { useState } from "react";
-import { ElementType } from "../../components/FormElements/FormElements";
+import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers } from "@/context/FormAnswerContext";
+import {
+	useFormAnswers,
+	getAnswerFromQuesitonId,
+} from "@/context/FormAnswerContext";
 import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
@@ -15,8 +17,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-
-const type: ElementType = "TextField";
 
 function FormComponet({
 	selectedStep,
@@ -33,9 +33,8 @@ function FormComponet({
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
-	const answerData = answers.find(
-		(data) => data.questionId == formDataCurrent?.id
-	);
+	if (!formDataCurrent || formDataCurrent.type != "LONG_TEXT") return null;
+	const typedAnswer = getAnswerFromQuesitonId(formDataCurrent.id!, "LONG_TEXT");
 
 	return (
 		<div className=" flex flex-col gap-2 ">
@@ -44,18 +43,18 @@ function FormComponet({
 					className="text-4xl"
 					style={{ color: formData.settings.questionColor }}
 				>
-					{formDataCurrent?.title}
-					{formDataCurrent?.required && (
+					{formDataCurrent.title}
+					{formDataCurrent.required && (
 						<span className="text-red-500 ml-1">*</span>
 					)}
 				</h1>
 				<div style={{ color: formData.settings.descriptionColor }}>
-					{formDataCurrent?.description}
+					{formDataCurrent.description}
 				</div>
 				<textarea
 					disabled={disabled}
-					minLength={formDataCurrent?.data?.minLength || undefined}
-					maxLength={formDataCurrent?.data?.maxLength || undefined}
+					minLength={formDataCurrent.data.minLength || undefined}
+					maxLength={formDataCurrent.data.maxLength || undefined}
 					style={
 						{
 							"--placeholder-color": formData.settings.answerColor,
@@ -63,19 +62,19 @@ function FormComponet({
 							borderColor: formData.settings.answerColor,
 						} as React.CSSProperties
 					}
-					placeholder={formDataCurrent?.data?.placeholder}
+					placeholder={formDataCurrent.data.placeholder}
 					className={`border-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] p-3 resize-y mb-4 ${
-						formDataCurrent?.data?.size === "small"
+						formDataCurrent.data.size === "small"
 							? "min-h-[80px]"
-							: formDataCurrent?.data?.size === "medium"
+							: formDataCurrent.data.size === "medium"
 							? "min-h-[120px]"
-							: formDataCurrent?.data?.size === "large"
+							: formDataCurrent.data.size === "large"
 							? "min-h-[200px]"
-							: formDataCurrent?.data?.size === "very-large"
+							: formDataCurrent.data.size === "very-large"
 							? "min-h-[300px]"
 							: "min-h-[120px]" // default medium
 					}`}
-					value={answerData?.answer || ""}
+					value={typedAnswer || ""}
 					onChange={(e) =>
 						setAnswer(formDataCurrent?.id!, "LONG_TEXT", e.target.value)
 					}
@@ -90,7 +89,7 @@ function FormComponet({
 					}}
 					onClick={buttonOnClink}
 				>
-					{formDataCurrent?.buttonText}
+					{formDataCurrent.buttonText}
 				</Button>
 			</div>
 		</div>
@@ -100,16 +99,19 @@ function FormComponet({
 function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	const { formStepData, changeQuestionProperty } = useFormStepData();
 	const data = formStepData.find((data) => data.step == selectedStep);
-
-	const updateQuestionProperty = (property: string, value: any) => {
+	if (!data || data.type != "LONG_TEXT") return;
+	const updateQuestionProperty = (
+		property: string,
+		value: string | boolean | {}
+	) => {
 		changeQuestionProperty(selectedStep, property, value);
 	};
 
 	return (
 		<PropertiesSetting
-			title={data?.title || ""}
-			description={data?.description || ""}
-			required={data?.required || false}
+			title={data.title}
+			description={data.description}
+			required={data.required || false}
 			onTitleChange={(title) => updateQuestionProperty("title", title)}
 			onDescriptionChange={(description) =>
 				updateQuestionProperty("description", description)
@@ -155,7 +157,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 				<div className="space-y-2">
 					<Label htmlFor="size">Text Area Size</Label>
 					<Select
-						value={data?.data?.size || "medium"}
+						value={data.data.size || "medium"}
 						onValueChange={(value) =>
 							updateQuestionProperty("data", {
 								...data?.data,
@@ -182,7 +184,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						id="minLength"
 						type="number"
 						min="0"
-						value={data?.data?.minLength || ""}
+						value={data.data.minLength || ""}
 						onChange={(e) =>
 							updateQuestionProperty("data", {
 								...data?.data,
@@ -202,7 +204,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						id="maxLength"
 						type="number"
 						min="1"
-						value={data?.data?.maxLength || ""}
+						value={data.data.maxLength || ""}
 						onChange={(e) =>
 							updateQuestionProperty("data", {
 								...data?.data,
@@ -219,4 +221,4 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	);
 }
 
-export default { FormComponet, properTiesComponent, type };
+export default { FormComponet, properTiesComponent };

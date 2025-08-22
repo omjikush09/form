@@ -55,7 +55,7 @@ function FormComponet({
 }
 
 function properTiesComponent({ selectedStep }: { selectedStep: number }) {
-	const { formStepData: formData, changeFormData } = useFormStepData();
+	const { formStepData: formData, changeQuestionProperty } = useFormStepData();
 	const data = formData.find((data) => data.step == selectedStep);
 
 	return (
@@ -63,9 +63,9 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 			title={data?.title || ""}
 			description={data?.description || ""}
 			required={false}
-			onTitleChange={(title) => changeFormData(selectedStep, "title", title)}
+			onTitleChange={(title) => changeQuestionProperty(selectedStep, "title", title)}
 			onDescriptionChange={(description) =>
-				changeFormData(selectedStep, "description", description)
+				changeQuestionProperty(selectedStep, "description", description)
 			}
 			onRequiredChange={() => {}} // Not applicable for start step
 		>
@@ -79,7 +79,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						type="text"
 						value={data?.buttonText || ""}
 						onChange={(e) =>
-							changeFormData(selectedStep, "buttonText", e.target.value)
+							changeQuestionProperty(selectedStep, "buttonText", e.target.value)
 						}
 						placeholder="Enter button text"
 					/>

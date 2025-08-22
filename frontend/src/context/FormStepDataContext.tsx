@@ -9,33 +9,37 @@ import { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
 import { arrayMove } from "@dnd-kit/sortable";
 
-export type FormStepData = {
-	id?: string;
-	step: number;
-	type: FormElementTypes;
-	data?: any;
-	buttonText?: string;
-	[key: string]: any;
-};
+export type FormElementConfig = (typeof FormDefaultData)[FormElementTypes];
 
 type ElementContextType = {
-	formStepData: FormStepData[];
+	formStepData: FormElementConfig[];
 	loading: boolean;
 	error: string | null;
 	addElements: (formId: string, type: AddElementFromType) => void;
 	setElements: (formId: string) => void;
-	changeFormData: (step: number, field: string, value: string) => void;
-	changeQuestionProperty: (step: number, property: string, value: any) => void;
+	changeQuestionProperty: (
+		step: number,
+		property: string,
+		value: string | boolean | {}
+	) => void;
 	changeFieldProperty: (
 		step: number,
 		fieldId: string,
 		property: string,
-		value: any
+		value: string | boolean
 	) => void;
 	removeStep: (step: number) => void;
 	reorderSteps: (activeStep: number, overStep: number) => void;
-	addOption: (step: number, option: { id: string; label: string; value: string }) => void;
-	updateOption: (step: number, optionId: string, property: string, value: string) => void;
+	addOption: (
+		step: number,
+		option: { id: string; label: string; value: string }
+	) => void;
+	updateOption: (
+		step: number,
+		optionId: string,
+		property: string,
+		value: string | boolean
+	) => void;
 	removeOption: (step: number, optionId: string) => void;
 	reorderOptions: (step: number, activeId: string, overId: string) => void;
 	publishForm: (formId: string) => void;
@@ -48,7 +52,7 @@ export default function ElementContextProvider({
 }: {
 	children: React.ReactNode;
 }) {
-	const [formStepData, setFormData] = useState<FormStepData[]>([]);
+	const [formStepData, setFormData] = useState<FormElementConfig[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +60,7 @@ export default function ElementContextProvider({
 		// body[step] = 2;
 		const exceptEnd = formStepData.filter((data) => data.type != "END_STEP");
 		let endStep = formStepData.find((data) => data.type == "END_STEP")!;
-		let body: FormStepData = {
+		let body: FormElementConfig = {
 			...FormDefaultData[type],
 			step: endStep?.step,
 		};
@@ -81,26 +85,11 @@ export default function ElementContextProvider({
 			setLoading(false);
 		}
 	};
-	const changeFormData = (
-		step: number,
-		field: string,
-		value: string,
-		title?: string
-	) => {
-		const remaingData = formStepData.filter((data) => data.step != step);
-		const data = formStepData.find((data) => data.step == step);
-		if (data) {
-			data[field] = value;
-			console.log(remaingData);
-			console.log(data);
-			setFormData([...remaingData, data]);
-		}
-	};
 
 	const changeQuestionProperty = (
 		step: number,
 		property: string,
-		value: any
+		value: string | boolean | {}
 	) => {
 		setFormData((prev) => {
 			const updated = [...prev];
@@ -121,7 +110,7 @@ export default function ElementContextProvider({
 		step: number,
 		fieldId: string,
 		property: string,
-		value: any
+		value: string | boolean
 	) => {
 		setFormData((prev) => {
 			const updated = [...prev];
@@ -130,8 +119,12 @@ export default function ElementContextProvider({
 			if (questionIndex >= 0) {
 				const question = updated[questionIndex];
 
-				if ((question.type === "CONTACT_INFO" || question.type === "ADDRESS") && question.data?.fields) {
-					const updatedFields = question.data.fields.map((field: any) =>
+				if (
+					(question.type === "CONTACT_INFO" || question.type === "ADDRESS") &&
+					question.data &&
+					"fields" in question.data
+				) {
+					const updatedFields = question.data.fields.map((field) =>
 						field.id === fieldId ? { ...field, [property]: value } : field
 					);
 
@@ -234,21 +227,28 @@ export default function ElementContextProvider({
 		toast("Steps reordered successfully");
 	};
 
-	const addOption = (step: number, option: { id: string; label: string; value: string }) => {
+	const addOption = (
+		step: number,
+		option: { id: string; label: string; value: string }
+	) => {
 		setFormData((prev) => {
 			const updated = [...prev];
 			const questionIndex = updated.findIndex((q) => q.step === step);
 
 			if (questionIndex >= 0) {
 				const question = updated[questionIndex];
-				if ((question.type === "SINGLE_SELECT_OPTION" || question.type === "MULTI_SELECT_OPTION" || question.type === "DROPDOWN") && question.data?.options) {
+				if (
+					question.type === "SINGLE_SELECT_OPTION" ||
+					question.type === "MULTI_SELECT_OPTION" ||
+					question.type === "DROPDOWN"
+				) {
 					updated[questionIndex] = {
 						...question,
 						data: {
 							...question.data,
 							options: [...question.data.options, option],
 						},
-					};
+					} as FormElementConfig; // Else we have to separed single and multi select due to TS
 				}
 			}
 
@@ -256,15 +256,24 @@ export default function ElementContextProvider({
 		});
 	};
 
-	const updateOption = (step: number, optionId: string, property: string, value: string) => {
+	const updateOption = (
+		step: number,
+		optionId: string,
+		property: string,
+		value: string | boolean
+	) => {
 		setFormData((prev) => {
 			const updated = [...prev];
 			const questionIndex = updated.findIndex((q) => q.step === step);
 
 			if (questionIndex >= 0) {
 				const question = updated[questionIndex];
-				if ((question.type === "SINGLE_SELECT_OPTION" || question.type === "MULTI_SELECT_OPTION" || question.type === "DROPDOWN") && question.data?.options) {
-					const updatedOptions = question.data.options.map((option: any) =>
+				if (
+					question.type === "SINGLE_SELECT_OPTION" ||
+					question.type === "MULTI_SELECT_OPTION" ||
+					question.type === "DROPDOWN"
+				) {
+					const updatedOptions = question.data.options.map((option) =>
 						option.id === optionId ? { ...option, [property]: value } : option
 					);
 
@@ -274,7 +283,7 @@ export default function ElementContextProvider({
 							...question.data,
 							options: updatedOptions,
 						},
-					};
+					} as FormElementConfig; // Else we have to separed single and multi select due to TS
 				}
 			}
 
@@ -289,8 +298,14 @@ export default function ElementContextProvider({
 
 			if (questionIndex >= 0) {
 				const question = updated[questionIndex];
-				if ((question.type === "SINGLE_SELECT_OPTION" || question.type === "MULTI_SELECT_OPTION" || question.type === "DROPDOWN") && question.data?.options) {
-					const updatedOptions = question.data.options.filter((option: any) => option.id !== optionId);
+				if (
+					question.type === "SINGLE_SELECT_OPTION" ||
+					question.type === "MULTI_SELECT_OPTION" ||
+					question.type === "DROPDOWN"
+				) {
+					const updatedOptions = question.data.options.filter(
+						(option) => option.id !== optionId
+					);
 
 					updated[questionIndex] = {
 						...question,
@@ -298,7 +313,7 @@ export default function ElementContextProvider({
 							...question.data,
 							options: updatedOptions,
 						},
-					};
+					} as FormElementConfig; // Else we have to separed single and multi select due to TS
 				}
 			}
 
@@ -316,10 +331,18 @@ export default function ElementContextProvider({
 
 			if (questionIndex >= 0) {
 				const question = updated[questionIndex];
-				if ((question.type === "SINGLE_SELECT_OPTION" || question.type === "MULTI_SELECT_OPTION" || question.type === "DROPDOWN") && question.data?.options) {
+				if (
+					(question.type === "SINGLE_SELECT_OPTION" ||
+						question.type === "MULTI_SELECT_OPTION" ||
+						question.type === "DROPDOWN") &&
+					question.data &&
+					"options" in question.data
+				) {
 					const options = [...question.data.options];
-					const activeIndex = options.findIndex((option: any) => option.id === activeId);
-					const overIndex = options.findIndex((option: any) => option.id === overId);
+					const activeIndex = options.findIndex(
+						(option) => option.id === activeId
+					);
+					const overIndex = options.findIndex((option) => option.id === overId);
 
 					if (activeIndex !== -1 && overIndex !== -1) {
 						const reorderedOptions = arrayMove(options, activeIndex, overIndex);
@@ -330,7 +353,7 @@ export default function ElementContextProvider({
 								...question.data,
 								options: reorderedOptions,
 							},
-						};
+						} as FormElementConfig;
 					}
 				}
 			}
@@ -343,33 +366,13 @@ export default function ElementContextProvider({
 		try {
 			toast.info("Starting Publishing");
 			// Filter questions to only include visible fields for CONTACT_INFO and ADDRESS types
-			const questionsToPublish = formStepData.map((question) => {
-				if ((question.type === "CONTACT_INFO" || question.type === "ADDRESS") && question.data?.fields) {
-					// Only include fields where display is true
-					const visibleFields = question.data.fields.filter(
-						(field: any) => field.display === true
-					);
-
-					return {
-						...question,
-						data: {
-							...question.data,
-							fields: visibleFields,
-						},
-					};
-				}
-
-				// For other question types, return as is
-				return question;
-			});
 
 			const response = await api.post(`form/${formId}/publish-with-questions`, {
-				questions: questionsToPublish,
+				questions: formStepData,
 			});
-			console.log(response);
+
 			toast("Form Published");
 		} catch (error) {
-			console.error(error);
 			toast.error("Failed to publish form ");
 		}
 	};
@@ -382,7 +385,6 @@ export default function ElementContextProvider({
 				error,
 				addElements,
 				setElements,
-				changeFormData,
 				changeQuestionProperty,
 				changeFieldProperty,
 				removeStep,
@@ -406,4 +408,3 @@ export const useFormStepData = () => {
 	}
 	return context;
 };
-

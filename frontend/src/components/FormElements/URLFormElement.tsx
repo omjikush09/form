@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers } from "@/context/FormAnswerContext";
+import { useFormAnswers, getAnswerFromQuesitonId } from "@/context/FormAnswerContext";
 import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,8 @@ function FormComponet({
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
-	const answerData = answers.find(
-		(data) => data.questionId == formDataCurrent?.id
-	);
+	if (!formDataCurrent || formDataCurrent.type != "URL") return null;
+	const answerData = getAnswerFromQuesitonId(formDataCurrent.id!, "URL");
 
 	return (
 		<div className=" flex flex-col gap-2 ">
@@ -34,13 +33,13 @@ function FormComponet({
 					className="text-4xl"
 					style={{ color: formData.settings.questionColor }}
 				>
-					{formDataCurrent?.title}
-					{formDataCurrent?.required && (
+					{formDataCurrent.title}
+					{formDataCurrent.required && (
 						<span className="text-red-500 ml-1">*</span>
 					)}
 				</h1>
 				<div style={{ color: formData.settings.descriptionColor }}>
-					{formDataCurrent?.description}
+					{formDataCurrent.description}
 				</div>
 				<input
 					type="url"
@@ -52,9 +51,9 @@ function FormComponet({
 							borderColor: formData.settings.answerColor,
 						} as React.CSSProperties
 					}
-					placeholder={formDataCurrent?.data?.placeholder}
+					placeholder={formDataCurrent.data.placeholder}
 					className="border-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] p-3 mb-4"
-					value={answerData?.answer || ""}
+					value={answerData ?? ""}
 					onChange={(e) =>
 						setAnswer(formDataCurrent?.id!, "URL", e.target.value)
 					}
@@ -69,7 +68,7 @@ function FormComponet({
 					}}
 					onClick={buttonOnClink}
 				>
-					{formDataCurrent?.buttonText}
+					{formDataCurrent.buttonText}
 				</Button>
 			</div>
 		</div>
@@ -79,16 +78,20 @@ function FormComponet({
 function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 	const { formStepData, changeQuestionProperty } = useFormStepData();
 	const data = formStepData.find((data) => data.step == selectedStep);
+	if (!data || data.type != "URL") return;
 
-	const updateQuestionProperty = (property: string, value: any) => {
+	const updateQuestionProperty = (
+		property: string,
+		value: string | boolean | {}
+	) => {
 		changeQuestionProperty(selectedStep, property, value);
 	};
 
 	return (
 		<PropertiesSetting
-			title={data?.title || ""}
-			description={data?.description || ""}
-			required={data?.required || false}
+			title={data.title}
+			description={data.description}
+			required={data.required || false}
 			onTitleChange={(title) => updateQuestionProperty("title", title)}
 			onDescriptionChange={(description) =>
 				updateQuestionProperty("description", description)
@@ -105,10 +108,10 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 					<Input
 						id="placeholder"
 						type="text"
-						value={data?.data?.placeholder || ""}
+						value={data.data.placeholder || ""}
 						onChange={(e) =>
 							updateQuestionProperty("data", {
-								...data?.data,
+								...data.data,
 								placeholder: e.target.value,
 							})
 						}
@@ -122,7 +125,7 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 					<Input
 						id="buttonText"
 						type="text"
-						value={data?.buttonText || ""}
+						value={data.buttonText || ""}
 						onChange={(e) =>
 							updateQuestionProperty("buttonText", e.target.value)
 						}
