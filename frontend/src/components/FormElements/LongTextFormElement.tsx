@@ -23,6 +23,7 @@ import {
 import { useReactFormHookContext } from "@/context/reactHookFormContext";
 import { BaseFormElementComponentProps, FormComponentProps } from "./types";
 import { FormElementDataTypes } from "@/config/data";
+import { toast } from "sonner";
 type currentData = FormElementDataTypes["LONG_TEXT"];
 
 const TextareaComponent = ({
@@ -222,14 +223,19 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						type="number"
 						min="0"
 						value={data.data.minLength || ""}
-						onChange={(e) =>
+						onChange={(e) => {
+							const value = parseInt(e.target.value);
+							if (!isNaN(value)) {
+								if (data?.data?.minLength && value > data?.data?.minLength) {
+									toast.error("Min value should be less than max value");
+									return;
+								}
+							}
 							updateQuestionProperty("data", {
 								...data?.data,
-								minLength: e.target.value
-									? parseInt(e.target.value)
-									: undefined,
-							})
-						}
+								minLength: e.target.value ? value : undefined,
+							});
+						}}
 						placeholder="No minimum"
 					/>
 				</div>
@@ -242,14 +248,19 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 						type="number"
 						min="1"
 						value={data.data.maxLength || ""}
-						onChange={(e) =>
+						onChange={(e) => {
+							const value = parseInt(e.target.value);
+							if (!isNaN(value)) {
+								if (data?.data?.minLength && value < data?.data?.minLength) {
+									toast.error("Max value should be greater then min value");
+									return;
+								}
+							}
 							updateQuestionProperty("data", {
 								...data?.data,
-								maxLength: e.target.value
-									? parseInt(e.target.value)
-									: undefined,
-							})
-						}
+								maxLength: e.target.value ? value : undefined,
+							});
+						}}
 						placeholder="No maximum"
 					/>
 				</div>
