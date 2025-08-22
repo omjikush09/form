@@ -1,7 +1,15 @@
 "use client";
 import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers, getAnswerFromQuesitonId } from "@/context/FormAnswerContext";
+import {
+	FormField,
+	FormItem,
+	FormControl,
+	FormMessage,
+} from "@/components/ui/form";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+import { useReactFormHookContext } from "@/context/reactHookFormContext";
 import { FiTrash2 } from "react-icons/fi";
 import { useFormContext } from "@/context/FormContext";
 import { Plus, GripVertical } from "lucide-react";
@@ -26,7 +34,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { v4 as uuidv4 } from "uuid";
-import { FormOption } from "@/config/data";
+import { FormElementDataTypes, FormOption } from "@/config/data";
+import { BaseFormElementComponentProps, FormComponentProps } from "./types";
 
 // Sortable Option Item Component
 function SortableOptionItem({
@@ -96,24 +105,63 @@ function SortableOptionItem({
 	);
 }
 
+type currentData = FormElementDataTypes["SINGLE_SELECT_OPTION"];
+
+const RadioOptionsComponent = ({
+	field,
+	disabled,
+	formData,
+	formDataCurrent,
+}: BaseFormElementComponentProps & { formDataCurrent: currentData }) => {
+	return (
+		<RadioGroup
+			{...field}
+			value={field?.value || ""}
+			disabled={disabled}
+			className="mt-4 flex flex-col gap-3"
+			onValueChange={(value) => {
+				if (field?.onChange) {
+					field.onChange(value);
+				}
+			}}
+		>
+			{formDataCurrent.data &&
+				formDataCurrent.data.options.map((option) => (
+					<div key={option.id} className="flex items-center gap-3">
+						<RadioGroupItem
+							value={option.value}
+							id={option.id}
+							style={{
+								borderColor: formData.settings.answerColor,
+							}}
+						/>
+						<label
+							htmlFor={option.id}
+							style={{ color: formData.settings.answerColor }}
+							className="cursor-pointer"
+						>
+							{option.label}
+						</label>
+					</div>
+				))}
+		</RadioGroup>
+	);
+};
+
 function FormComponet({
 	selectedStep,
 	disabled = false,
 	buttonOnClink = () => {},
-}: {
-	selectedStep: number;
-	disabled: boolean;
-	buttonOnClink?: () => void;
-}) {
+	isSubmitting,
+}: FormComponentProps) {
 	const { formStepData } = useFormStepData();
-	const { answers, setAnswer, isSubmitting } = useFormAnswers();
 	const { formData } = useFormContext();
+	const form = useReactFormHookContext();
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
 	if (!formDataCurrent || formDataCurrent.type != "SINGLE_SELECT_OPTION")
 		return null;
-	const answerData = getAnswerFromQuesitonId(formDataCurrent?.id!, "SINGLE_SELECT_OPTION");
 
 	return (
 		<div className="flex flex-col gap-2">
@@ -130,44 +178,31 @@ function FormComponet({
 				<div style={{ color: formData.settings.descriptionColor }}>
 					{formDataCurrent.description}
 				</div>
-				<div className="mt-4 flex flex-col gap-3">
-					{formDataCurrent.data &&
-						formDataCurrent.data.options.map((option) => (
-							<label
-								key={option.id}
-								className="flex items-center gap-3 cursor-pointer"
-							>
-								<input
-									type="checkbox"
-									disabled={disabled}
-									checked={answerData === option.value}
-									onChange={(e) => {
-										if (e.target.checked) {
-											setAnswer(
-												formDataCurrent?.id!,
-												"SINGLE_SELECT_OPTION",
-												option.value
-											);
-										} else {
-											setAnswer(
-												formDataCurrent?.id!,
-												"SINGLE_SELECT_OPTION",
-												""
-											);
-										}
-									}}
-									className="w-5 h-5 rounded border-2"
-									style={{
-										accentColor: formData.settings.answerColor,
-										borderColor: formData.settings.answerColor,
-									}}
-								/>
-								<span style={{ color: formData.settings.answerColor }}>
-									{option.label}
-								</span>
-							</label>
-						))}
-				</div>
+				{form && form.control ? (
+					<FormField
+						control={form.control}
+						name={formDataCurrent.id!}
+						render={({ field }) => (
+							<FormItem>
+								<FormControl>
+									<RadioOptionsComponent
+										field={field}
+										disabled={disabled}
+										formData={formData}
+										formDataCurrent={formDataCurrent}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				) : (
+					<RadioOptionsComponent
+						disabled={disabled}
+						formData={formData}
+						formDataCurrent={formDataCurrent}
+					/>
+				)}
 
 				<Button
 					disabled={isSubmitting}

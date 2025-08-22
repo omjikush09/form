@@ -1,30 +1,61 @@
 "use client";
 import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers, getAnswerFromQuesitonId } from "@/context/FormAnswerContext";
+import {
+	FormField,
+	FormItem,
+	FormControl,
+	FormMessage,
+} from "@/components/ui/form";
+import { useReactFormHookContext } from "@/context/reactHookFormContext";
+
 import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { FormElementDataTypes } from "@/config/data";
+import { BaseFormElementComponentProps, FormComponentProps } from "./types";
+
+type currentData = FormElementDataTypes["DATE"];
+
+const DateInputComponent = ({
+	field,
+	disabled,
+	formData,
+	formDataCurrent,
+}: BaseFormElementComponentProps & { formDataCurrent: currentData }) => {
+	return (
+		<Input
+			{...field}
+			value={field?.value || ""}
+			type="date"
+			disabled={disabled}
+			style={
+				{
+					color: formData.settings.answerColor,
+					borderColor: formData.settings.answerColor,
+				} as React.CSSProperties
+			}
+			className="border-2 border-solid rounded border-gray-300 w-full focus:outline-none p-3 mb-4"
+		/>
+	);
+};
 
 function FormComponet({
 	selectedStep,
 	disabled = false,
 	buttonOnClink = () => {},
-}: {
-	selectedStep: number;
-	disabled: boolean;
-	buttonOnClink?: () => void;
-}) {
+	isSubmitting,
+}: FormComponentProps) {
 	const { formStepData } = useFormStepData();
-	const { answers, setAnswer, isSubmitting } = useFormAnswers();
+
 	const { formData } = useFormContext();
+	const form = useReactFormHookContext();
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
 	if (!formDataCurrent || formDataCurrent.type != "DATE") return null;
-	const answerData = getAnswerFromQuesitonId(formDataCurrent.id!, "DATE");
 
 	return (
 		<div className=" flex flex-col gap-2 ">
@@ -41,21 +72,31 @@ function FormComponet({
 				<div style={{ color: formData.settings.descriptionColor }}>
 					{formDataCurrent.description}
 				</div>
-				<input
-					type="date"
-					disabled={disabled}
-					style={
-						{
-							color: formData.settings.answerColor,
-							borderColor: formData.settings.answerColor,
-						} as React.CSSProperties
-					}
-					className="border-2 border-solid rounded border-gray-300 w-full focus:outline-none p-3 mb-4"
-					value={answerData ?? ""}
-					onChange={(e) =>
-						setAnswer(formDataCurrent.id!, "DATE", e.target.value)
-					}
-				/>
+				{form && form.control ? (
+					<FormField
+						control={form.control}
+						name={formDataCurrent.id!}
+						render={({ field }) => (
+							<FormItem>
+								<FormControl>
+									<DateInputComponent
+										field={field}
+										disabled={disabled}
+										formData={formData}
+										formDataCurrent={formDataCurrent}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				) : (
+					<DateInputComponent
+						disabled={disabled}
+						formData={formData}
+						formDataCurrent={formDataCurrent}
+					/>
+				)}
 
 				<Button
 					disabled={isSubmitting}

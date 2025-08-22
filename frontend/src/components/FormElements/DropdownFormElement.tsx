@@ -1,14 +1,13 @@
 "use client";
 import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers, getAnswerFromQuesitonId } from "@/context/FormAnswerContext";
-import { FiTrash2 } from "react-icons/fi";
-import { useFormContext } from "@/context/FormContext";
-import { Plus, GripVertical } from "lucide-react";
-import PropertiesSetting from "@/components/PropertiesSetting";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+
+import {
+	FormField,
+	FormItem,
+	FormControl,
+	FormMessage,
+} from "@/components/ui/form";
 import {
 	Select,
 	SelectContent,
@@ -16,6 +15,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+
+import { useReactFormHookContext } from "@/context/reactHookFormContext";
+import { FiTrash2 } from "react-icons/fi";
+import { useFormContext } from "@/context/FormContext";
+import { Plus, GripVertical } from "lucide-react";
+import PropertiesSetting from "@/components/PropertiesSetting";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
 	DndContext,
 	closestCenter,
@@ -33,7 +41,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { v4 as uuidv4 } from "uuid";
-import { FormOption } from "@/config/data";
+import { FormElementDataTypes, FormOption } from "@/config/data";
+import { BaseFormElementComponentProps, FormComponentProps } from "./types";
 
 // Sortable Option Item Component
 function SortableOptionItem({
@@ -100,24 +109,60 @@ function SortableOptionItem({
 		</div>
 	);
 }
+type currentData = FormElementDataTypes["DROPDOWN"];
+const SelectComponent = ({
+	field,
+	disabled,
+	formData,
+	formDataCurrent,
+}: BaseFormElementComponentProps & { formDataCurrent: currentData }) => {
+	return (
+		<div className="mt-4">
+			<Select
+				{...field}
+				value={field?.value || ""}
+				disabled={disabled}
+				onValueChange={(value) => {
+					if (field?.onChange) {
+						field.onChange(value);
+					}
+				}}
+			>
+				<SelectTrigger
+					className="w-full p-3 border-2 rounded-md"
+					style={{
+						borderColor: formData.settings.answerColor,
+						color: formData.settings.answerColor,
+					}}
+				>
+					<SelectValue placeholder="Choose an option..." />
+				</SelectTrigger>
+				<SelectContent>
+					{formDataCurrent.data &&
+						formDataCurrent.data.options.map((option) => (
+							<SelectItem key={option.id} value={option.value}>
+								{option.label}
+							</SelectItem>
+						))}
+				</SelectContent>
+			</Select>
+		</div>
+	);
+};
 
 function FormComponet({
 	selectedStep,
 	disabled = false,
 	buttonOnClink = () => {},
-}: {
-	selectedStep: number;
-	disabled: boolean;
-	buttonOnClink?: () => void;
-}) {
+	isSubmitting,
+}: FormComponentProps) {
 	const { formStepData } = useFormStepData();
-	const { answers, setAnswer, isSubmitting } = useFormAnswers();
 	const { formData } = useFormContext();
+	const form = useReactFormHookContext();
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
 	if (!formDataCurrent || formDataCurrent.type != "DROPDOWN") return null;
-	const answerData = getAnswerFromQuesitonId(formDataCurrent.id!, "DROPDOWN");
 
 	return (
 		<div className="flex flex-col gap-2">
@@ -134,34 +179,30 @@ function FormComponet({
 				<div style={{ color: formData.settings.descriptionColor }}>
 					{formDataCurrent.description}
 				</div>
-				{formDataCurrent && formDataCurrent.type == "DROPDOWN" && (
-					<div className="mt-4">
-						<Select
-							disabled={disabled}
-							value={answerData ?? ""}
-							onValueChange={(value) =>
-								setAnswer(formDataCurrent?.id!, "DROPDOWN", value)
-							}
-						>
-							<SelectTrigger
-								className="w-full p-3 border-2 rounded-md"
-								style={{
-									borderColor: formData.settings.answerColor,
-									color: formData.settings.answerColor,
-								}}
-							>
-								<SelectValue placeholder="Choose an option..." />
-							</SelectTrigger>
-							<SelectContent>
-								{formDataCurrent.data &&
-									formDataCurrent.data.options.map((option) => (
-										<SelectItem key={option.id} value={option.value}>
-											{option.label}
-										</SelectItem>
-									))}
-							</SelectContent>
-						</Select>
-					</div>
+				{form && form.control ? (
+					<FormField
+						control={form.control}
+						name={formDataCurrent.id!}
+						render={({ field }) => (
+							<FormItem>
+								<FormControl>
+									<SelectComponent
+										field={field}
+										disabled={disabled}
+										formData={formData}
+										formDataCurrent={formDataCurrent}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				) : (
+					<SelectComponent
+						disabled={disabled}
+						formData={formData}
+						formDataCurrent={formDataCurrent}
+					/>
 				)}
 
 				<Button

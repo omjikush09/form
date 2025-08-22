@@ -116,9 +116,8 @@ export const validateQuestionAnswer = (
 				const answerData = answerResult.data;
 
 				for (const field of fields) {
-					const fieldData = answerData[field.id] as
-						| { value: string }
-						| undefined;
+					const fieldData = answerData[field.id];
+
 					const fieldValue = fieldData?.value || "";
 
 					if (field.required && !fieldValue.trim()) {

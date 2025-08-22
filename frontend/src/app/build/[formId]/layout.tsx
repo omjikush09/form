@@ -1,4 +1,3 @@
-import FormAnswerProvider from "@/context/FormAnswerContext";
 import ElementContextProvider from "@/context/FormStepDataContext";
 import { FormProvider } from "@/context/FormContext";
 import type { Metadata } from "next";
@@ -16,9 +15,7 @@ export default function RootLayout({
 	return (
 		<FormProvider>
 			<ElementContextProvider>
-				<FormAnswerProvider>
-					<div className="h-dvh w-screen">{children}</div>
-				</FormAnswerProvider>
+				<div className="h-dvh w-screen">{children}</div>
 			</ElementContextProvider>
 		</FormProvider>
 	);

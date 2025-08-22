@@ -185,6 +185,7 @@ export const FieldAnswerSchema = z.record(
 	z.string(),
 	z.object({
 		value: z.string(),
+		type: z.enum(["tel", "number", "text", "email"]),
 		title: z.string(),
 	})
 );
@@ -204,7 +205,7 @@ const AnswerSchema = z.object({
 
 // Submit Form Response Request Body Schema
 export const SubmitFormResponseBodySchema = z.object({
-	answers: z.array(AnswerSchema).min(1, "At least one answer is required"),
+	answers: z.array(AnswerSchema),
 });
 
 // Combined validation schemas for each route

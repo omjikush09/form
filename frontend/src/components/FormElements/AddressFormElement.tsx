@@ -1,31 +1,104 @@
 "use client";
 import React, { useState } from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers, getAnswerFromQuesitonId } from "@/context/FormAnswerContext";
+import {
+	FormField,
+	FormItem,
+	FormControl,
+	FormMessage,
+} from "@/components/ui/form";
+
+import { useReactFormHookContext } from "@/context/reactHookFormContext";
 import { Eye, EyeOff, Settings } from "lucide-react";
 import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { FormElementDataTypes, FormFieldData } from "@/config/data";
+import { BaseFormElementComponentProps, FormComponentProps } from "./types";
+
+type currentData = FormElementDataTypes["ADDRESS"];
+
+const AddressInputComponent = ({
+	field,
+	disabled,
+	formData,
+	formDataCurrent,
+}: BaseFormElementComponentProps & { formDataCurrent: currentData }) => {
+	const handleInputChange = (
+		fieldId: string,
+		value: string,
+		fieldData: FormFieldData
+	) => {
+		if (field?.onChange) {
+			// For form mode - update the form field value
+			const currentValue = field.value || {};
+			console.log(currentValue);
+			field.onChange({
+				...currentValue,
+				[fieldId]: {
+					value: value,
+					title: fieldData.title,
+					type: fieldData.type,
+				},
+			});
+		}
+	};
+
+	return (
+		<div className="grid grid-cols-2 gap-2">
+			{formDataCurrent.data.fields
+				.filter((data) => data.display === true)
+				.map((data) => {
+					const fieldValue = field?.value?.[data.id]?.value || "";
+					return (
+						<label key={data.id} className="flex flex-col gap-2">
+							<div style={{ color: formData.settings.questionColor }}>
+								{data.title}
+								{data.required && (
+									<span className="text-red-500 text-sm">*</span>
+								)}
+							</div>
+							<input
+								disabled={disabled}
+								className="focus:outline-none border-b-2 border-solid"
+								required={data.required}
+								type={data.type}
+								style={
+									{
+										"--placeholder-color": formData.settings.answerColor,
+										color: formData.settings.answerColor,
+										borderColor: formData.settings.answerColor,
+									} as React.CSSProperties
+								}
+								placeholder={data.placeholder}
+								name={data.id}
+								value={fieldValue}
+								onChange={(e) =>
+									handleInputChange(data.id, e.target.value, data)
+								}
+							/>
+						</label>
+					);
+				})}
+		</div>
+	);
+};
 
 function FormComponet({
 	selectedStep,
 	disabled = false,
 	buttonOnClink = () => {},
-}: {
-	selectedStep: number;
-	disabled: boolean;
-	buttonOnClink?: () => void;
-}) {
+	isSubmitting,
+}: FormComponentProps) {
 	const { formStepData } = useFormStepData();
-	const { answers, setAnswer, isSubmitting } = useFormAnswers();
 	const { formData } = useFormContext();
+	const form = useReactFormHookContext();
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
 	if (!formDataCurrent || formDataCurrent.type != "ADDRESS") return null;
-	const answerData = getAnswerFromQuesitonId(formDataCurrent.id!, "ADDRESS");
 
 	return (
 		<div className=" flex flex-col gap-2">
@@ -35,50 +108,38 @@ function FormComponet({
 					style={{ color: formData.settings.questionColor }}
 				>
 					{formDataCurrent.title}
+					{formDataCurrent.required && (
+						<span className="text-red-500 ml-1">*</span>
+					)}
 				</h1>
 				<div style={{ color: formData.settings.descriptionColor }}>
 					{formDataCurrent.description}
 				</div>
-				<div className="grid grid-cols-2 gap-2">
-					{formDataCurrent.data.fields
-						.filter((data) => data.display === true)
-						.map((data) => {
-							return (
-								<label key={data.id} className="flex flex-col gap-2">
-									<div style={{ color: formData.settings.questionColor }}>
-										{data.title}
-										{data.required && (
-											<span className="text-red-500 text-sm">*</span>
-										)}
-									</div>
-									<input
+				{form && form.control ? (
+					<FormField
+						control={form.control}
+						name={formDataCurrent.id!}
+						render={({ field }) => (
+							<FormItem>
+								<FormControl>
+									<AddressInputComponent
+										field={field}
 										disabled={disabled}
-										className="focus:outline-none border-b-2 border-solid"
-										required={data.required}
-										type={data.type}
-										style={
-											{
-												"--placeholder-color": formData.settings.answerColor,
-												color: formData.settings.answerColor,
-												borderColor: formData.settings.answerColor,
-											} as React.CSSProperties
-										}
-										placeholder={data.placeholder}
-										name={data.id}
-										value={answerData?.[data.id]?.value ?? ""}
-										onChange={(e) =>
-											setAnswer(
-												formDataCurrent?.id!,
-												"ADDRESS",
-												e.target.value,
-												data.id
-											)
-										}
+										formData={formData}
+										formDataCurrent={formDataCurrent}
 									/>
-								</label>
-							);
-						})}
-				</div>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				) : (
+					<AddressInputComponent
+						disabled={disabled}
+						formData={formData}
+						formDataCurrent={formDataCurrent}
+					/>
+				)}
 
 				<Button
 					disabled={isSubmitting}

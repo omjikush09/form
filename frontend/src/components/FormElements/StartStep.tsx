@@ -6,20 +6,16 @@ import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useFormAnswers } from "@/context/FormAnswerContext";
+import { FormComponentProps } from "./types";
 
 function FormComponet({
 	selectedStep,
 	disabled = false,
 	buttonOnClink = () => {},
-}: {
-	selectedStep: number;
-	disabled: boolean;
-	buttonOnClink?: () => void;
-}) {
+	isSubmitting,
+}: FormComponentProps) {
 	const { formStepData } = useFormStepData();
 	const { formData } = useFormContext();
-	const { isSubmitting } = useFormAnswers();
 
 	const data = formStepData.find((data) => data.step == selectedStep);
 	return (
@@ -63,7 +59,9 @@ function properTiesComponent({ selectedStep }: { selectedStep: number }) {
 			title={data?.title || ""}
 			description={data?.description || ""}
 			required={false}
-			onTitleChange={(title) => changeQuestionProperty(selectedStep, "title", title)}
+			onTitleChange={(title) =>
+				changeQuestionProperty(selectedStep, "title", title)
+			}
 			onDescriptionChange={(description) =>
 				changeQuestionProperty(selectedStep, "description", description)
 			}

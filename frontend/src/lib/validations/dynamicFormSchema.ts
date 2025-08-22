@@ -24,56 +24,66 @@ export const createDynamicFormSchema = (formStepData: FormElementConfig[]) => {
 					z.string(),
 					z.object({
 						value: z.string(),
+						type: z.enum(["tel", "number", "text", "email"]),
 						title: z.string(),
 					})
 				);
 
 				// Add validation for individual fields if needed
 				if (step.data?.fields && Array.isArray(step.data.fields)) {
-					const refinedSchema = contactInfoSchema.refine(
-						(data) => {
-							const errors: string[] = [];
+					const refinedSchema = contactInfoSchema.superRefine((data, ctx) => {
+						step.data.fields.forEach((field) => {
+							const fieldData = data[field.id];
+							const fieldValue = fieldData?.value || "";
 
-							step.data.fields.forEach((field) => {
-								const fieldData = data[field.id];
-								const fieldValue = fieldData?.value || "";
+							// Required field validation
+							if (field.required && !fieldValue.trim()) {
+								ctx.addIssue({
+									code: "custom",
+									path: [field.id, "value"],
+									message: `${field.title || field.id} is required`,
+								});
+							}
 
-								// Required field validation
-								if (field.required && !fieldValue.trim()) {
-									errors.push(`${field.title || field.id} is required`);
+							// Email validation using Zod's built-in email validator
+							if (fieldValue && field.type === "email") {
+								const emailResult = z
+									.email({
+										message: "Please enter a valid email address",
+									})
+									.safeParse(fieldValue);
+								if (!emailResult.success) {
+									ctx.addIssue({
+										code: "custom",
+										path: [field.id, "value"],
+										message: `Please enter a valid email address for ${
+											field.title || field.id
+										}`,
+									});
 								}
+							}
 
-								// Email validation
-								if (fieldValue && field.type === "email") {
-									const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-									if (!emailRegex.test(fieldValue)) {
-										errors.push(
-											`Please enter a valid email address for ${
-												field.title || field.id
-											}`
-										);
-									}
+							// Phone validation
+							if (fieldValue && field.type === "tel") {
+								const phoneResult = z
+									.string()
+									.regex(
+										/^[\+]?[1-9][\d]{0,15}$/,
+										"Invalid phone number format"
+									)
+									.safeParse(fieldValue.replace(/[\s\-\(\)]/g, ""));
+								if (!phoneResult.success) {
+									ctx.addIssue({
+										code: z.ZodIssueCode.custom,
+										path: [field.id, "value"],
+										message: `Please enter a valid phone number for ${
+											field.title || field.id
+										}`,
+									});
 								}
-
-								// Phone validation
-								if (fieldValue && field.type === "tel") {
-									const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-									if (!phoneRegex.test(fieldValue.replace(/[\s\-\(\)]/g, ""))) {
-										errors.push(
-											`Please enter a valid phone number for ${
-												field.title || field.id
-											}`
-										);
-									}
-								}
-							});
-
-							return errors.length === 0;
-						},
-						{
-							message: "Please fix the contact information errors",
-						}
-					);
+							}
+						});
+					});
 
 					schemaFields[fieldKey] = step.required
 						? refinedSchema
@@ -120,34 +130,26 @@ export const createDynamicFormSchema = (formStepData: FormElementConfig[]) => {
 					);
 				}
 
-				schemaFields[fieldKey] = step.required
-					? multiSelectSchema
-					: multiSelectSchema.optional().default([]);
+				// Add default value at the end and assign to schema fields
+				schemaFields[fieldKey] = multiSelectSchema.default([]);
 				break;
 
 			case "NUMBER":
-				let numberSchema = z.union([
-					z.number(),
-					z.string().transform((val) => {
-						const parsed = parseFloat(val);
-						if (isNaN(parsed)) {
-							throw new Error("Please enter a valid number");
-						}
-						return parsed;
-					}),
-				]);
+				let numberSchema = z.coerce.number({
+					message: "Please enter a valid number",
+				});
 
-				// Add range constraints
+				// Add range constraints using Zod's built-in validators
 				if (step.data?.minValue !== undefined) {
-					numberSchema = numberSchema.refine(
-						(val) => val >= step?.data?.minValue!,
+					numberSchema = numberSchema.min(
+						step.data.minValue,
 						`Value must be at least ${step.data.minValue}`
 					);
 				}
 
 				if (step.data?.maxValue !== undefined) {
-					numberSchema = numberSchema.refine(
-						(val) => val <= step.data.maxValue!,
+					numberSchema = numberSchema.max(
+						step.data.maxValue,
 						`Value must be no more than ${step.data.maxValue}`
 					);
 				}
@@ -160,7 +162,7 @@ export const createDynamicFormSchema = (formStepData: FormElementConfig[]) => {
 			case "LONG_TEXT":
 				let longTextSchema = z.string();
 
-				// Add length constraints
+				// Add length constraints using Zod's built-in validators
 				if (step.data?.minLength) {
 					longTextSchema = longTextSchema.min(
 						step.data.minLength,
@@ -175,12 +177,11 @@ export const createDynamicFormSchema = (formStepData: FormElementConfig[]) => {
 					);
 				}
 
-				// Handle required validation
+				// Handle required validation using trim for better UX
 				if (step.required) {
-					longTextSchema = longTextSchema.refine(
-						(val) => val.trim().length > 0,
-						"This field is required"
-					);
+					longTextSchema = longTextSchema
+						.trim()
+						.min(1, "This field is required");
 				}
 
 				schemaFields[fieldKey] = step.required
@@ -191,12 +192,11 @@ export const createDynamicFormSchema = (formStepData: FormElementConfig[]) => {
 			case "SHORT_TEXT":
 				let shortTextSchema = z.string();
 
-				// Handle required validation
+				// Handle required validation using Zod's built-in methods
 				if (step.required) {
-					shortTextSchema = shortTextSchema.refine(
-						(val) => val.trim().length > 0,
-						"This field is required"
-					);
+					shortTextSchema = shortTextSchema
+						.trim()
+						.min(1, "This field is required");
 				}
 
 				schemaFields[fieldKey] = step.required
@@ -204,16 +204,41 @@ export const createDynamicFormSchema = (formStepData: FormElementConfig[]) => {
 					: shortTextSchema.optional();
 				break;
 
+			case "URL":
+				let urlSchema = z.url({
+					message: "Please enter a valid URL",
+				});
+
+				// Handle required validation
+				if (step.required) {
+					urlSchema = urlSchema.min(1, "This field is required");
+				}
+
+				schemaFields[fieldKey] = step.required
+					? urlSchema
+					: urlSchema.optional();
+				break;
+
+			case "DATE":
+				let dateSchema = z.string();
+
+				// Handle required validation
+				if (step.required) {
+					dateSchema = dateSchema.min(1, "This field is required");
+				}
+
+				schemaFields[fieldKey] = step.required
+					? dateSchema
+					: dateSchema.optional();
+				break;
+
 			default:
 				// For other types, basic string validation
 				let defaultSchema = z.string();
 
-				// Handle required validation
+				// Handle required validation using Zod's built-in methods
 				if (step.required) {
-					defaultSchema = defaultSchema.refine(
-						(val) => val.trim().length > 0,
-						"This field is required"
-					);
+					defaultSchema = defaultSchema.trim().min(1, "This field is required");
 				}
 
 				schemaFields[fieldKey] = step.required

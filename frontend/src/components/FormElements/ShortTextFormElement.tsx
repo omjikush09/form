@@ -1,36 +1,70 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import {
-	useFormAnswers,
-	getAnswerFromQuesitonId,
-} from "@/context/FormAnswerContext";
 import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+	FormField,
+	FormItem,
+	FormControl,
+	FormMessage,
+} from "@/components/ui/form";
+import { useReactFormHookContext } from "@/context/reactHookFormContext";
+import {
+	BaseFormElementComponentProps,
+	FormComponentProps,
+	PropertiesComponentProps,
+} from "./types";
+import { FormDefaultData } from "@/config/data";
+
+type currentData = (typeof FormDefaultData)["SHORT_TEXT"];
+
+const InputComponent = ({
+	field,
+	disabled,
+	formData,
+	formDataCurrent,
+}: BaseFormElementComponentProps & { formDataCurrent: currentData }) => {
+	return (
+		<Input
+			{...field}
+			value={field?.value || ""}
+			disabled={disabled}
+			style={
+				{
+					"--placeholder-color": formData.settings.answerColor,
+					color: formData.settings.answerColor,
+					borderColor: formData.settings.answerColor,
+				} as React.CSSProperties
+			}
+			placeholder={formDataCurrent.data.placeholder}
+			className="border-b-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] mb-4"
+		/>
+	);
+};
 
 function FormComponet({
 	selectedStep,
 	disabled = false,
 	buttonOnClink = () => {},
-}: {
-	selectedStep: number;
-	disabled: boolean;
-	buttonOnClink?: () => void;
-}) {
+	isSubmitting,
+}: FormComponentProps) {
 	const { formStepData } = useFormStepData();
-	const { answers, setAnswer, isSubmitting } = useFormAnswers();
+
 	const { formData } = useFormContext();
+	const form = useReactFormHookContext();
+
 	const formDataCurrent = formStepData.find(
-		(data) => data.step == selectedStep
+		(data) => data.step === selectedStep
 	);
-	if (!formDataCurrent || formDataCurrent.type != "SHORT_TEXT") return null;
-	const answerData = getAnswerFromQuesitonId(
-		formDataCurrent.id!,
-		"SHORT_TEXT"
-	);
+
+	if (!formDataCurrent || formDataCurrent.type !== "SHORT_TEXT") {
+		return null;
+	}
+	const currentData = formDataCurrent;
 
 	return (
 		<div className=" flex flex-col gap-2 ">
@@ -47,26 +81,32 @@ function FormComponet({
 				<div style={{ color: formData.settings.descriptionColor }}>
 					{formDataCurrent.description}
 				</div>
-				<input
-					disabled={disabled}
-					style={
-						{
-							"--placeholder-color": formData.settings.answerColor,
-							color: formData.settings.answerColor,
-							borderColor: formData.settings.answerColor,
-						} as React.CSSProperties
-					}
-					placeholder={formDataCurrent?.data.placeholder}
-					className="border-b-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] mb-4"
-					value={answerData ?? ""}
-					onChange={(e) =>
-						setAnswer<"SHORT_TEXT">(
-							formDataCurrent?.id!,
-							"SHORT_TEXT",
-							e.target.value
-						)
-					}
-				/>
+
+				{form && form.control ? (
+					<FormField
+						control={form.control}
+						name={formDataCurrent.id!}
+						render={({ field }) => (
+							<FormItem>
+								<FormControl>
+									<InputComponent
+										field={field}
+										disabled={disabled}
+										formData={formData}
+										formDataCurrent={currentData}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				) : (
+					<InputComponent
+						disabled={disabled}
+						formData={formData}
+						formDataCurrent={formDataCurrent}
+					/>
+				)}
 
 				<Button
 					disabled={isSubmitting}
@@ -84,7 +124,7 @@ function FormComponet({
 	);
 }
 
-function properTiesComponent({ selectedStep }: { selectedStep: number }) {
+function properTiesComponent({ selectedStep }: PropertiesComponentProps) {
 	const { formStepData, changeQuestionProperty } = useFormStepData();
 	const data = formStepData.find((data) => data.step == selectedStep);
 	if (data?.type != "SHORT_TEXT") return null;

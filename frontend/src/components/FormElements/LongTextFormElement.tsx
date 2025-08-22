@@ -1,15 +1,12 @@
 "use client";
 import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import {
-	useFormAnswers,
-	getAnswerFromQuesitonId,
-} from "@/context/FormAnswerContext";
 import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
 	Select,
 	SelectContent,
@@ -17,24 +14,67 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import {
+	FormField,
+	FormItem,
+	FormControl,
+	FormMessage,
+} from "@/components/ui/form";
+import { useReactFormHookContext } from "@/context/reactHookFormContext";
+import { BaseFormElementComponentProps, FormComponentProps } from "./types";
+import { FormElementDataTypes } from "@/config/data";
+type currentData = FormElementDataTypes["LONG_TEXT"];
+
+const TextareaComponent = ({
+	field,
+	disabled,
+	formData,
+	formDataCurrent,
+}: BaseFormElementComponentProps & { formDataCurrent: currentData }) => {
+	return (
+		<Textarea
+			{...field}
+			value={field?.value || ""}
+			disabled={disabled}
+			minLength={formDataCurrent.data.minLength || undefined}
+			maxLength={formDataCurrent.data.maxLength || undefined}
+			style={
+				{
+					"--placeholder-color": formData.settings.answerColor,
+					color: formData.settings.answerColor,
+					borderColor: formData.settings.answerColor,
+				} as React.CSSProperties
+			}
+			placeholder={formDataCurrent.data.placeholder}
+			className={`border-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] p-3 resize-y mb-4 ${
+				formDataCurrent.data.size === "small"
+					? "min-h-[80px]"
+					: formDataCurrent.data.size === "medium"
+					? "min-h-[120px]"
+					: formDataCurrent.data.size === "large"
+					? "min-h-[200px]"
+					: formDataCurrent.data.size === "very-large"
+					? "min-h-[300px]"
+					: "min-h-[120px]" // default medium
+			}`}
+		/>
+	);
+};
 
 function FormComponet({
 	selectedStep,
 	disabled = false,
 	buttonOnClink = () => {},
-}: {
-	selectedStep: number;
-	disabled: boolean;
-	buttonOnClink?: () => void;
-}) {
-	const { formStepData, changeQuestionProperty } = useFormStepData();
-	const { answers, setAnswer, isSubmitting } = useFormAnswers();
+	isSubmitting,
+}: FormComponentProps) {
+	const { formStepData } = useFormStepData();
+
 	const { formData } = useFormContext();
+	const form = useReactFormHookContext();
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
 	if (!formDataCurrent || formDataCurrent.type != "LONG_TEXT") return null;
-	const typedAnswer = getAnswerFromQuesitonId(formDataCurrent.id!, "LONG_TEXT");
 
 	return (
 		<div className=" flex flex-col gap-2 ">
@@ -51,34 +91,31 @@ function FormComponet({
 				<div style={{ color: formData.settings.descriptionColor }}>
 					{formDataCurrent.description}
 				</div>
-				<textarea
-					disabled={disabled}
-					minLength={formDataCurrent.data.minLength || undefined}
-					maxLength={formDataCurrent.data.maxLength || undefined}
-					style={
-						{
-							"--placeholder-color": formData.settings.answerColor,
-							color: formData.settings.answerColor,
-							borderColor: formData.settings.answerColor,
-						} as React.CSSProperties
-					}
-					placeholder={formDataCurrent.data.placeholder}
-					className={`border-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] p-3 resize-y mb-4 ${
-						formDataCurrent.data.size === "small"
-							? "min-h-[80px]"
-							: formDataCurrent.data.size === "medium"
-							? "min-h-[120px]"
-							: formDataCurrent.data.size === "large"
-							? "min-h-[200px]"
-							: formDataCurrent.data.size === "very-large"
-							? "min-h-[300px]"
-							: "min-h-[120px]" // default medium
-					}`}
-					value={typedAnswer || ""}
-					onChange={(e) =>
-						setAnswer(formDataCurrent?.id!, "LONG_TEXT", e.target.value)
-					}
-				/>
+				{form && form.control ? (
+					<FormField
+						control={form.control}
+						name={formDataCurrent.id!}
+						render={({ field }) => (
+							<FormItem>
+								<FormControl>
+									<TextareaComponent
+										field={field}
+										disabled={disabled}
+										formData={formData}
+										formDataCurrent={formDataCurrent}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				) : (
+					<TextareaComponent
+						disabled={disabled}
+						formData={formData}
+						formDataCurrent={formDataCurrent}
+					/>
+				)}
 
 				<Button
 					disabled={isSubmitting}
