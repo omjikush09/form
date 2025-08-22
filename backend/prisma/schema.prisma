@@ -41,6 +41,7 @@ model Form_Questions {
   buttonText String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  deleted    Boolean          @default(false)
   from_answer Form_Answers[]
   form        Form           @relation(fields: [form_id], references: [id], onDelete: Cascade)
 }

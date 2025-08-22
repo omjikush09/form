@@ -10,7 +10,8 @@ import type {
 export const createFormService = async (
 	userId: string,
 	title: string,
-	settings: z.infer<typeof FormSettingsSchema>
+	settings: z.infer<typeof FormSettingsSchema>,
+	questions?: z.infer<typeof PublishFormBodySchema>["questions"]
 ) => {
 	const form = db.transaction().execute(async (trx) => {
 		const form = await trx
@@ -24,35 +25,28 @@ export const createFormService = async (
 			.returningAll()
 			.executeTakeFirstOrThrow();
 
-		trx
-			.insertInto("Form_Questions")
-			.values({
-				form_id: form.id,
-				title: "Hey there 😀",
-				description: "Mind filling out this form?",
-				step: 0,
-				type: "START_STEP",
-				data: JSON.stringify({}),
-				buttonText: "Get Started",
-				updatedAt: sql`NOW()`,
-			})
-			.executeTakeFirstOrThrow();
-		trx
-			.insertInto("Form_Questions")
-			.values({
-				form_id: form.id,
-				title: "Thank you! 🙌",
-				description: "That's all. You may now close this window.",
-				step: 1,
-				type: "END_STEP",
-				data: JSON.stringify({}),
-				updatedAt: sql`NOW()`,
-			})
-			.executeTakeFirstOrThrow();
+		if (questions && questions.length > 0) {
+			// Create custom questions if provided
+			await trx
+				.insertInto("Form_Questions")
+				.values(
+					questions.map((question) => ({
+						form_id: form.id,
+						type: question.type,
+						title: question.title,
+						description: question.description,
+						data: JSON.stringify(question.data),
+						step: question.step,
+						required: question.required || false,
+						buttonText: question.buttonText,
+						updatedAt: sql`NOW()`,
+					}))
+				)
+				.execute();
+		}
+
 		return form;
 	});
-
-	// const form =
 
 	return form;
 };
@@ -101,6 +95,7 @@ export const getFormQuestionsService = async (formId: string) => {
 		.selectFrom("Form_Questions")
 		.selectAll()
 		.where("form_id", "=", formId)
+		.where("deleted", "=", false)
 		.orderBy("step", "asc")
 		.execute();
 
@@ -115,11 +110,12 @@ export const publishFormWithQuestionsService = async (
 		let questionResults = [];
 
 		if (questions && questions.length > 0) {
-			// Get all existing questions for the form
+			// Get all existing non-deleted questions for the form
 			const existingQuestions = await trx
 				.selectFrom("Form_Questions")
 				.select(["id"])
 				.where("form_id", "=", formId)
+				.where("deleted", "=", false)
 				.execute();
 
 			// Get IDs from frontend questions that have IDs
@@ -127,15 +123,19 @@ export const publishFormWithQuestionsService = async (
 				.filter((q) => q.id)
 				.map((q) => q.id!);
 
-			// Find questions to delete (exist in database but not in frontend)
+			// Find questions to mark as deleted (exist in database but not in frontend)
 			const questionsToDelete = existingQuestions.filter(
 				(dbQuestion) => !frontendQuestionIds.includes(dbQuestion.id)
 			);
 
-			// Delete questions that are no longer needed
+			// Mark questions as deleted instead of hard deleting them
 			if (questionsToDelete.length > 0) {
 				await trx
-					.deleteFrom("Form_Questions")
+					.updateTable("Form_Questions")
+					.set({
+						deleted: true,
+						updatedAt: sql`NOW()`,
+					})
 					.where("form_id", "=", formId)
 					.where(
 						"id",

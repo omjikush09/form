@@ -11,17 +11,6 @@ export const FormSettingsSchema = z.object({
 	fontFamily: z.string(),
 });
 
-// Create Form Request Body Schema
-export const CreateFormBodySchema = z.object({
-	userId: z.string().min(1, "User ID is required"),
-	title: z.string().min(1, "Title is required"),
-	status: z.enum(["PUBLISHED", "DRAFT", "CLOSED"]),
-	settings: FormSettingsSchema,
-});
-
-// Update Form Request Body Schema
-export const UpdateFormBodySchema = CreateFormBodySchema.partial();
-
 // Form ID Parameter Schema
 export const FormIdParamSchema = z.object({
 	formId: z.string().min(1, "Form ID is required"),
@@ -207,6 +196,18 @@ const AnswerSchema = z.object({
 export const SubmitFormResponseBodySchema = z.object({
 	answers: z.array(AnswerSchema),
 });
+
+// Create Form Request Body Schema
+export const CreateFormBodySchema = z.object({
+	userId: z.string().min(1, "User ID is required"),
+	title: z.string().min(1, "Title is required"),
+	status: z.enum(["PUBLISHED", "DRAFT", "CLOSED"]),
+	settings: FormSettingsSchema,
+	questions: z.array(QuestionSchema).optional(),
+});
+
+// Update Form Request Body Schema
+export const UpdateFormBodySchema = CreateFormBodySchema.partial();
 
 // Combined validation schemas for each route
 export const FormValidationSchemas = {
