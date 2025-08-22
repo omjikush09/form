@@ -1,7 +1,8 @@
 "use client";
 
-import { AddElementFromType } from "@/config/data";
+import { AddElementFromType, inputValues } from "@/config/data";
 import api from "@/util/axios";
+import { AxiosError } from "axios";
 import {
 	createContext,
 	Dispatch,
@@ -21,8 +22,14 @@ type StatementAnswer = never; // Statement doesn't have answers
 type SingleSelectAnswer = string;
 type MultiSelectAnswer = string[];
 type DropdownAnswer = string;
-type ContactInfoAnswer = Record<string, { title: string; value: string }>;
-type AddressAnswer = Record<string, { title: string; value: string }>;
+type ContactInfoAnswer = Record<
+	string,
+	{ title: string; value: string; type: inputValues }
+>;
+type AddressAnswer = Record<
+	string,
+	{ title: string; value: string; type: inputValues }
+>;
 
 // Map each form element type to its answer type
 type AnswerType = {
@@ -50,7 +57,7 @@ type FormAnswerContextType = {
 	setAnswer: <T extends AddElementFromType>(
 		questionId: string,
 		questionType: T,
-		answer: T extends "CONTACT_INFO" | "ADDRESS" 
+		answer: T extends "CONTACT_INFO" | "ADDRESS"
 			? AnswerType[T] | string
 			: AnswerType[T],
 		id?: string
@@ -96,14 +103,14 @@ export default function FormAnswerProvider({
 	const setAnswer = <T extends AddElementFromType>(
 		questionId: string,
 		questionType: T,
-		answer: T extends "CONTACT_INFO" | "ADDRESS" 
+		answer: T extends "CONTACT_INFO" | "ADDRESS"
 			? AnswerType[T] | string
 			: AnswerType[T],
 		id?: string
 	) => {
 		setAnswers((prev) => {
 			const existingIndex = prev.findIndex((a) => a.questionId === questionId);
-			
+
 			// Handle field updates for CONTACT_INFO and ADDRESS
 			if (
 				(questionType === "CONTACT_INFO" || questionType === "ADDRESS") &&
@@ -175,18 +182,23 @@ export default function FormAnswerProvider({
 				clearAnswers();
 				return true;
 			} else {
+				return false;
+			}
+		} catch (error) {
+			if (error instanceof AxiosError) {
+				const response = error.response!;
+
 				if (response.data.error && response.data.validationErrors) {
-					response.data.validationsErros.forEach((err: any) => {
+					response.data.validationErrors.forEach((err: any) => {
 						toast.error(err.field, err.message);
 					});
 				} else {
 					toast.error("Failed to submit form");
 				}
-				return false;
+			} else {
+				toast.error("Failed to submit form");
 			}
-		} catch (error) {
-			console.error("Error submitting form:", error);
-			toast.error("Failed to submit form");
+
 			return false;
 		} finally {
 			setIsSubmitting(false);

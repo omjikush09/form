@@ -1,10 +1,14 @@
 import { sql } from "kysely";
 import { db } from "../../db/index.js";
-
+import { z } from "zod";
+import type {
+	FormSettingsSchema,
+	UpdateFormBodySchema,
+} from "./form.schema.js";
 export const createFormService = async (
 	userId: string,
 	title: string,
-	settings: any = {}
+	settings: z.infer<typeof FormSettingsSchema>
 ) => {
 	const form = db.transaction().execute(async (trx) => {
 		const form = await trx
@@ -74,17 +78,11 @@ export const getFormByIdService = async (formId: string) => {
 
 export const updateFormService = async (
 	formId: string,
-	updates: { title?: string; settings?: any; status?: string }
+	updates: z.infer<typeof UpdateFormBodySchema>
 ) => {
-	const updateData: any = {};
-
-	if (updates.title) updateData.title = updates.title;
-	if (updates.settings) updateData.settings = JSON.stringify(updates.settings);
-	if (updates.status) updateData.status = updates.status;
-
 	const form = await db
 		.updateTable("Form")
-		.set(updateData)
+		.set(updates)
 		.where("id", "=", formId)
 		.returningAll()
 		.executeTakeFirstOrThrow();
@@ -120,7 +118,6 @@ export const publishFormWithQuestionsService = async (
 		buttonText?: string;
 	}>
 ) => {
-	// console.log(questions);
 	return await db.transaction().execute(async (trx) => {
 		let questionResults = [];
 

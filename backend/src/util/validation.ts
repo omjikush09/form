@@ -4,9 +4,9 @@ import type { Request, Response, NextFunction } from "express";
 // Type helper to extract Zod schema types
 export type CreateRequestType<
 	T extends {
-		params?: z.ZodSchema<any>;
-		body?: z.ZodSchema<any>;
-		query?: z.ZodSchema<any>;
+		params?: z.ZodSchema;
+		body?: z.ZodSchema;
+		query?: z.ZodSchema;
 	}
 > = {
 	params: T["params"] extends z.ZodSchema<infer P> ? P : {};
@@ -16,9 +16,9 @@ export type CreateRequestType<
 
 // Interface for validation schemas
 interface ValidationSchemas {
-	params?: z.ZodSchema<any>;
-	body?: z.ZodSchema<any>;
-	query?: z.ZodSchema<any>;
+	params?: z.ZodSchema;
+	body?: z.ZodSchema;
+	query?: z.ZodSchema;
 }
 
 // Enhanced validation function that takes schemas for different parts of the request
@@ -45,7 +45,7 @@ export const validateRequest = (schemas: ValidationSchemas) => {
 			if (error instanceof z.ZodError) {
 				return res.status(400).json({
 					error: "Validation failed",
-					details: error.issues.map((err) => ({
+					validationErrors: error.issues.map((err) => ({
 						field: err.path.join("."),
 						message: err.message,
 					})),

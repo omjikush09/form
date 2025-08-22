@@ -8,6 +8,17 @@ export type ValidationError = {
 };
 
 // Zod validation schemas
+
+// Base question schema
+const baseQuestionSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	description: z.string().optional(),
+	required: z.boolean().default(false),
+	buttonText: z.string().optional(),
+});
+
+// Field schema for contact info and address
 const contactInfoFieldSchema = z.object({
 	id: z.string(),
 	title: z.string(),
@@ -16,6 +27,128 @@ const contactInfoFieldSchema = z.object({
 	required: z.boolean().default(false),
 	placeholder: z.string().optional(),
 });
+
+// Option schema for select types
+const optionSchema = z.object({
+	id: z.string(),
+	label: z.string(),
+	value: z.string(),
+});
+
+// Short text question schema
+const shortTextQuestionSchema = baseQuestionSchema.extend({
+	type: z.literal("SHORT_TEXT"),
+	data: z
+		.object({
+			placeholder: z.string().optional(),
+		})
+		.optional(),
+});
+
+// Long text question schema
+const longTextQuestionSchema = baseQuestionSchema.extend({
+	type: z.literal("LONG_TEXT"),
+	data: z
+		.object({
+			placeholder: z.string().optional(),
+			minLength: z.number().optional(),
+			maxLength: z.number().optional(),
+		})
+		.optional(),
+});
+
+// Number question schema
+const numberQuestionSchema = baseQuestionSchema.extend({
+	type: z.literal("NUMBER"),
+	data: z
+		.object({
+			placeholder: z.string().optional(),
+			minValue: z.number().optional(),
+			maxValue: z.number().optional(),
+		})
+		.optional(),
+});
+
+// Date question schema
+const dateQuestionSchema = baseQuestionSchema.extend({
+	type: z.literal("DATE"),
+	data: z.object({}).optional(),
+});
+
+// URL question schema
+const urlQuestionSchema = baseQuestionSchema.extend({
+	type: z.literal("URL"),
+	data: z
+		.object({
+			placeholder: z.string().optional(),
+		})
+		.optional(),
+});
+
+// Single select question schema
+const singleSelectQuestionSchema = baseQuestionSchema.extend({
+	type: z.literal("SINGLE_SELECT_OPTION"),
+	data: z.object({
+		options: z.array(optionSchema),
+	}),
+});
+
+// Multi select question schema
+const multiSelectQuestionSchema = baseQuestionSchema.extend({
+	type: z.literal("MULTI_SELECT_OPTION"),
+	data: z.object({
+		options: z.array(optionSchema),
+		selectionType: z.enum(["unlimited", "fixed", "range"]).default("unlimited"),
+		minSelections: z.number().optional(),
+		maxSelections: z.number().optional(),
+		fixedSelections: z.number().optional(),
+	}),
+});
+
+// Dropdown question schema
+const dropdownQuestionSchema = baseQuestionSchema.extend({
+	type: z.literal("DROPDOWN"),
+	data: z.object({
+		options: z.array(optionSchema),
+	}),
+});
+
+// Contact info question schema
+const contactInfoQuestionSchema = baseQuestionSchema.extend({
+	type: z.literal("CONTACT_INFO"),
+	data: z.object({
+		fields: z.array(contactInfoFieldSchema),
+	}),
+});
+
+// Address question schema
+const addressQuestionSchema = baseQuestionSchema.extend({
+	type: z.literal("ADDRESS"),
+	data: z.object({
+		fields: z.array(contactInfoFieldSchema),
+	}),
+});
+
+// Statement question schema
+const statementQuestionSchema = baseQuestionSchema.extend({
+	type: z.literal("STATEMENT"),
+	data: z.object({}).optional(),
+});
+
+// Union of all question schemas
+export const questionSchema = z.discriminatedUnion("type", [
+	shortTextQuestionSchema,
+	longTextQuestionSchema,
+	numberQuestionSchema,
+	dateQuestionSchema,
+	urlQuestionSchema,
+	singleSelectQuestionSchema,
+	multiSelectQuestionSchema,
+	dropdownQuestionSchema,
+	contactInfoQuestionSchema,
+	addressQuestionSchema,
+	statementQuestionSchema,
+]);
 
 const contactInfoSchema = z.record(
 	z.string(),

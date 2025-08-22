@@ -11,6 +11,7 @@ import {
 } from "./form.controller.js";
 import { validateRequest } from "../../util/validation.js";
 import { FormValidationSchemas } from "./form.schema.js";
+import { validateFormAnswers } from "./form.middleware.js";
 
 const router: Router = express.Router();
 
@@ -35,7 +36,7 @@ router.get("/:formId/questions", validateRequest(FormValidationSchemas.getFormQu
 // Publish form with questions
 router.post("/:formId/publish-with-questions", validateRequest(FormValidationSchemas.publishFormWithQuestions), publishFormWithQuestions);
 
-// Submit form response
-router.post("/:formId/responses", validateRequest(FormValidationSchemas.submitFormResponse), submitFormResponse);
+// Submit form response (using both validation middlewares)
+router.post("/:formId/responses", validateRequest(FormValidationSchemas.submitFormResponse), validateFormAnswers, submitFormResponse);
 
 export default router;

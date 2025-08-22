@@ -19,8 +19,7 @@ interface FormSettings {
 interface FormData {
 	id: string;
 	title: string;
-	description?: string;
-	status?: string;
+	status: "PUBLISHED" | "DRAFT" | "CLOSED";
 	settings: FormSettings;
 }
 
@@ -52,8 +51,8 @@ const defaultSettings: FormSettings = {
 const defaultFormData: FormData = {
 	id: "",
 	title: "Untitled Form",
-	description: "",
 	settings: defaultSettings,
+	status: "DRAFT",
 };
 
 // Create Context
@@ -93,7 +92,6 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 				...prev.settings,
 				...settingsUpdates,
 			},
-			updatedAt: new Date(),
 		}));
 	};
 
@@ -107,7 +105,6 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 			setFormData({
 				id: apiData.id,
 				title: apiData.title,
-				description: apiData.description || "",
 				status: apiData.status,
 				settings: {
 					...defaultSettings,
@@ -134,7 +131,6 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 		try {
 			const updatePayload = {
 				title: formData.title,
-				description: formData.description,
 				settings: formData.settings,
 			};
 
@@ -143,7 +139,6 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 			// Update the updatedAt timestamp
 			setFormData((prev) => ({
 				...prev,
-				updatedAt: new Date(),
 			}));
 
 			toast("Form design saved successfully!");

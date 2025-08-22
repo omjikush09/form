@@ -9,8 +9,17 @@ import {
 	publishFormWithQuestionsService,
 	submitFormResponseService,
 } from "./form.service.js";
+import type {
+	CreateFormRequest,
+	DeleteFormRequest,
+	GetFormByIdRequest,
+	GetFormQuestionsRequest,
+	GetFormsByUserRequest,
+	PublishFormWithQuestionsRequest,
+	SubmitFormResponseRequest,
+	UpdateFormRequest,
+} from "./from.types.js";
 import { validateFormResponses } from "./form.validations.js";
-import type { CreateFormRequest, DeleteFormRequest, GetFormByIdRequest, GetFormQuestionsRequest, GetFormsByUserRequest, PublishFormWithQuestionsRequest, SubmitFormResponseRequest, UpdateFormRequest } from "./from.types.js";
 
 export const createForm = async (
 	req: Request<CreateFormRequest["params"], unknown, CreateFormRequest["body"]>,
@@ -88,17 +97,7 @@ export const updateForm = async (
 		const { formId } = req.params;
 		const updates = req.body;
 
-		// Transform the updates to match service expectations
-		const serviceUpdates: { title?: string; settings?: any; status?: string } =
-			{
-				...(updates.title !== undefined && { title: updates.title }),
-				...(updates.settings !== undefined && { settings: updates.settings }),
-				...(updates.description !== undefined && {
-					description: updates.description,
-				}),
-			};
-
-		const form = await updateFormService(formId, serviceUpdates);
+		const form = await updateFormService(formId, updates);
 		res.json({
 			data: form,
 			message: "Form updated successfully",
@@ -200,30 +199,6 @@ export const submitFormResponse = async (
 		const { formId } = req.params;
 		const { answers } = req.body;
 
-		// Fetch form questions from the database
-		const formQuestions = await getFormQuestionsService(formId);
-
-		// Filter out START_STEP and END_STEP questions for validation
-		const validatableQuestions = formQuestions.filter(
-			(question) =>
-				question.type !== "START_STEP" && question.type !== "END_STEP"
-		);
-
-		// Run validation with the fetched questions data
-		const validationErrors = validateFormResponses(
-			validatableQuestions,
-			answers
-		);
-
-		// If there are validation errors, return them immediately
-		if (validationErrors.length > 0) {
-			return res.status(400).json({
-				error: "Form validation failed",
-				validationErrors: validationErrors,
-			});
-		}
-
-		// If validation passes, proceed with service call
 		const response = await submitFormResponseService(formId, answers);
 		res.status(201).json({
 			data: response,

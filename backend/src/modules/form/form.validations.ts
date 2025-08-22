@@ -1,62 +1,32 @@
 import type { Form_Questions } from "../../generated/prisma/types.js";
 import type { Selectable } from "kysely";
 import { z } from "zod";
+import {
+	contactInfoDataSchema,
+	multiSelectDataSchema,
+	numberDataSchema,
+	longTextDataSchema,
+	FieldAnswerSchema,
+} from "./form.schema.js";
 
 // Validation error type
 export interface ValidationError {
 	field: string;
 	message: string;
-	questionId?: string;
+	title?: string;
+	questionId: string;
 }
 
-// Zod schemas for different question types
-const contactInfoFieldSchema = z.object({
-	id: z.string(),
-	title: z.string(),
-	type: z.enum(["text", "email", "tel", "number"]),
-	display: z.boolean().default(true),
-	required: z.boolean().default(false),
-	placeholder: z.string().optional(),
-});
-
-const contactInfoSchema = z.record(
-	z.string(),
-	z.object({
-		value: z.string(),
-		title: z.string(),
-	})
-);
-
+// Use schemas from form.schema.ts instead of duplicating them
+// Basic answer validation schemas
 const multiSelectSchema = z.array(z.string());
-
 const numberSchema = z.union([
 	z.number(),
 	z.string().transform((val) => parseFloat(val)),
 ]);
-
 const textSchema = z.string();
 
-// Question data schemas
-const contactInfoDataSchema = z.object({
-	fields: z.array(contactInfoFieldSchema),
-});
-
-const multiSelectDataSchema = z.object({
-	selectionType: z.enum(["unlimited", "fixed", "range"]).default("unlimited"),
-	minSelections: z.number().optional(),
-	maxSelections: z.number().optional(),
-	fixedSelections: z.number().optional(),
-});
-
-const numberDataSchema = z.object({
-	minValue: z.number().optional(),
-	maxValue: z.number().optional(),
-});
-
-const longTextDataSchema = z.object({
-	minLength: z.number().optional(),
-	maxLength: z.number().optional(),
-});
+// Simple contact info answer schema for existing validation logic
 
 // Helper function to convert Zod errors to ValidationError format
 const formatZodErrors = (
@@ -103,18 +73,12 @@ export const validateQuestionAnswer = (
 	if (isEmpty) {
 		return errors;
 	}
+	let questionData: Selectable<Form_Questions>;
 
-	// Parse question data
-	let questionData: any = {};
-	try {
-		questionData =
-			typeof question.data === "string"
-				? JSON.parse(question.data)
-				: question.data || {};
-	} catch {
-		// If parsing fails, use empty object
-		questionData = {};
-	}
+	questionData =
+		typeof question.data === "string"
+			? JSON.parse(question.data)
+			: question.data || {};
 
 	// Type-specific validations using Zod
 	switch (question.type) {
@@ -135,7 +99,7 @@ export const validateQuestionAnswer = (
 				}
 
 				// Validate answer structure
-				const answerResult = contactInfoSchema.safeParse(answer);
+				const answerResult = FieldAnswerSchema.safeParse(answer);
 				if (!answerResult.success) {
 					errors.push(
 						...formatZodErrors(
@@ -159,7 +123,7 @@ export const validateQuestionAnswer = (
 
 					if (field.required && !fieldValue.trim()) {
 						errors.push({
-							field: field.id,
+							field: field.title,
 							message: `${field.title} is required`,
 							questionId,
 						});
@@ -171,7 +135,7 @@ export const validateQuestionAnswer = (
 							.safeParse(fieldValue);
 						if (!emailResult.success) {
 							errors.push({
-								field: field.id,
+								field: field.title,
 								message: "Please enter a valid email address",
 								questionId,
 							});
@@ -182,7 +146,7 @@ export const validateQuestionAnswer = (
 						const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
 						if (!phoneRegex.test(fieldValue.replace(/[\s\-\(\)]/g, ""))) {
 							errors.push({
-								field: field.id,
+								field: field.title,
 								message: "Please enter a valid phone number",
 								questionId,
 							});

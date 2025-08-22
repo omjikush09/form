@@ -4,11 +4,15 @@ import { FormAnswer, useFormAnswers } from "@/context/FormAnswerContext";
 import { useFormContext } from "@/context/FormContext";
 import { Spinner } from "@/components/ui/shadcn-io/spinner";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { validateQuestion, canProceedToNext } from "@/lib/validations/formAnswerValidation";
+import {
+	validateQuestion,
+	canProceedToNext,
+} from "@/lib/validations/formAnswerValidation";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { ValidationError } from "@/lib/validations/formAnswerValidation";
+import { inputValues } from "@/config/data";
 
 function Form() {
 	const { formId } = useParams<{ formId: string }>();
@@ -25,7 +29,7 @@ function Form() {
 		error: formContextError,
 	} = useFormContext();
 	const [currentStep, setCurrentStep] = useState(0);
-	const { setAnswers, submitAnswers, getAnswer } = useFormAnswers();
+	const {answers, setAnswers, submitAnswers, getAnswer } = useFormAnswers();
 
 	const getQuestions = async (formId: string) => {
 		try {
@@ -56,7 +60,11 @@ function Form() {
 			currentStepData &&
 			!canProceedToNext(currentStepData.id!, currentStepData, getAnswer)
 		) {
-			const errors = validateQuestion(currentStepData.id!, currentStepData, getAnswer);
+			const errors = validateQuestion(
+				currentStepData.id!,
+				currentStepData,
+				getAnswer
+			);
 			errors.forEach((error: ValidationError) => {
 				if (error.field === "general") {
 					toast.error(error.message);
@@ -83,7 +91,11 @@ function Form() {
 				currentStepData &&
 				!canProceedToNext(currentStepData.id!, currentStepData, getAnswer)
 			) {
-				const errors = validateQuestion(currentStepData.id!, currentStepData, getAnswer);
+				const errors = validateQuestion(
+					currentStepData.id!,
+					currentStepData,
+					getAnswer
+				);
 				errors.forEach((error: ValidationError) => {
 					if (error.field === "general") {
 						toast.error(error.message);
@@ -109,15 +121,26 @@ function Form() {
 	}, [formId]);
 	useEffect(() => {
 		const filteredData = formStepData.filter(
-			(data) => data.type != "START_STEP" && data.type != "END_STEP"
+			(data) =>
+				data.type != "START_STEP" &&
+				data.type != "END_STEP" &&
+				data.type != "STATEMENT"
 		);
 		const ans: FormAnswer[] = filteredData.map((data) => {
 			if (data.type == "CONTACT_INFO" || data.type == "ADDRESS") {
-				const answers: Record<string, { title: string; value: string }> = {};
+				const answers: Record<
+					string,
+					{ title: string; value: string; type: inputValues }
+				> = {};
 				data.data.fields
 					.filter((field) => field.display === true)
 					.forEach(
-						(field) => (answers[field.id] = { value: "", title: field.title })
+						(field) =>
+							(answers[field.id] = {
+								value: "",
+								title: field.title,
+								type: field.type,
+							})
 					);
 				return {
 					questionId: data.id!,
@@ -125,10 +148,10 @@ function Form() {
 					answer: answers,
 				};
 			}
-			return { 
-				questionId: data.id!, 
+			return {
+				questionId: data.id!,
 				questionType: data.type,
-				answer: "" 
+				answer: "",
 			};
 		});
 		setAnswers(ans);
@@ -172,6 +195,7 @@ function Form() {
 				fontFamily: `${formData.settings.fontFamily}, sans-serif`,
 			}}
 		>
+			{/* {JSON.stringify(answers)} */}
 			<div className="flex flex-col gap-2">
 				{/* {JSON.stringify(formData)} */}
 

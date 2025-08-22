@@ -44,10 +44,12 @@ export type FormOption = {
 	value: string;
 };
 
+export type inputValues = "text" | "email" | "tel" | "number";
+
 export type FormField = {
 	id: string;
 	title: string;
-	type: "text" | "email" | "tel" | "number";
+	type: inputValues;
 	placeholder?: string;
 	required: boolean;
 	display: boolean;
