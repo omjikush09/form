@@ -1,7 +1,13 @@
 "use client";
 import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers, getAnswerFromQuesitonId } from "@/context/FormAnswerContext";
+import {
+	FormField,
+	FormItem,
+	FormControl,
+	FormMessage,
+} from "@/components/ui/form";
+import { useReactFormHookContext } from "@/context/reactHookFormContext";
 import { FiTrash2 } from "react-icons/fi";
 import { useFormContext } from "@/context/FormContext";
 import { Plus, GripVertical } from "lucide-react";
@@ -33,14 +39,133 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { v4 as uuidv4 } from "uuid";
-import { FormOption } from "@/config/data";
+import { FormElementDataTypes, FormOption } from "@/config/data";
+import { BaseFormElementComponentProps, FormComponentProps } from "./types";
 
+type currentData = FormElementDataTypes["MULTI_SELECT_OPTION"];
+
+const MultiSelectComponent = ({
+	field,
+	disabled,
+	formData,
+	formDataCurrent,
+}: BaseFormElementComponentProps & { formDataCurrent: currentData }) => {
+	// Handle multi-select checkbox changes
+	const handleCheckboxChange = (optionValue: string, checked: boolean) => {
+		const currentAnswers = field?.value || [];
+		const selectionType = formDataCurrent.data.selectionType || "unlimited";
+		const minSelections = formDataCurrent.data.minSelections || 0;
+		const maxSelections = formDataCurrent.data.maxSelections || null;
+		const fixedSelections = formDataCurrent.data.fixedSelections || null;
+		let newAnswers;
+
+		if (checked) {
+			// Check limits based on selection type
+			if (
+				selectionType === "fixed" &&
+				fixedSelections &&
+				currentAnswers.length >= fixedSelections
+			) {
+				return; // Don't allow if fixed limit reached
+			}
+			if (
+				selectionType === "range" &&
+				maxSelections &&
+				currentAnswers.length >= maxSelections
+			) {
+				return; // Don't allow if max limit reached
+			}
+			// Add the option if checked
+			newAnswers = [...currentAnswers, optionValue];
+		} else {
+			// Check minimum when unchecking
+			if (
+				selectionType === "fixed" &&
+				fixedSelections &&
+				currentAnswers.length <= fixedSelections
+			) {
+				return; // Don't allow unchecking if it would go below fixed requirement
+			}
+			if (selectionType === "range" && currentAnswers.length <= minSelections) {
+				return; // Don't allow unchecking if it would go below minimum
+			}
+			// Remove the option if unchecked
+			newAnswers = currentAnswers.filter(
+				(value: string) => value !== optionValue
+			);
+		}
+
+		if (field?.onChange) {
+			field.onChange(newAnswers);
+		}
+	};
+
+	const currentAnswers = field?.value || [];
+
+	return (
+		<div>
+			{formDataCurrent.data.selectionType &&
+				formDataCurrent.data.selectionType !== "unlimited" && (
+					<div className="mt-2 text-sm text-gray-600">
+						{formDataCurrent.data.selectionType === "fixed" &&
+							formDataCurrent.data.fixedSelections && (
+								<>
+									Please select exactly {formDataCurrent.data.fixedSelections}{" "}
+									option(s)
+									{currentAnswers?.length && (
+										<span className="ml-1">
+											({currentAnswers.length}/
+											{formDataCurrent.data.fixedSelections} selected)
+										</span>
+									)}
+								</>
+							)}
+						{formDataCurrent.data.selectionType === "range" && (
+							<>
+								Select {formDataCurrent.data.minSelections || 0} to{" "}
+								{formDataCurrent.data.maxSelections || "unlimited"} option(s)
+								{currentAnswers?.length && (
+									<span className="ml-1">
+										({currentAnswers.length} selected)
+									</span>
+								)}
+							</>
+						)}
+					</div>
+				)}
+			<div className="mt-4 flex flex-col gap-3">
+				{formDataCurrent.data.options.map((option) => (
+					<label
+						key={option.id}
+						className="flex items-center gap-3 cursor-pointer"
+					>
+						<input
+							type="checkbox"
+							disabled={disabled}
+							checked={currentAnswers?.includes(option.value) ?? false}
+							onChange={(e) =>
+								handleCheckboxChange(option.value, e.target.checked)
+							}
+							className="w-5 h-5 rounded border-2"
+							style={{
+								accentColor: formData.settings.answerColor,
+								borderColor: formData.settings.answerColor,
+							}}
+						/>
+						<span style={{ color: formData.settings.answerColor }}>
+							{option.label}
+						</span>
+					</label>
+				))}
+			</div>
+		</div>
+	);
+};
 // Sortable Option Item Component
 function SortableOptionItem({
 	option,
 	updateOptionProperty,
 	handleRemoveOption,
-	isLast,
 }: {
 	option: FormOption;
 	updateOptionProperty: (
@@ -107,68 +232,16 @@ function FormComponet({
 	selectedStep,
 	disabled = false,
 	buttonOnClink = () => {},
-}: {
-	selectedStep: number;
-	disabled: boolean;
-	buttonOnClink?: () => void;
-}) {
+	isSubmitting,
+}: FormComponentProps) {
 	const { formStepData } = useFormStepData();
-	const { answers, setAnswer, isSubmitting } = useFormAnswers();
 	const { formData } = useFormContext();
+	const form = useReactFormHookContext();
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
 	if (!formDataCurrent || formDataCurrent.type != "MULTI_SELECT_OPTION")
 		return null;
-	const answerData = getAnswerFromQuesitonId(formDataCurrent.id!, "MULTI_SELECT_OPTION");
-
-	// Handle multi-select checkbox changes
-	const handleCheckboxChange = (optionValue: string, checked: boolean) => {
-		const currentAnswers = answerData ?? [];
-		const selectionType = formDataCurrent.data.selectionType || "unlimited";
-		const minSelections = formDataCurrent.data.minSelections || 0;
-		const maxSelections = formDataCurrent.data.maxSelections || null;
-		const fixedSelections = formDataCurrent.data.fixedSelections || null;
-		let newAnswers;
-
-		if (checked) {
-			// Check limits based on selection type
-			if (
-				selectionType === "fixed" &&
-				fixedSelections &&
-				currentAnswers.length >= fixedSelections
-			) {
-				return; // Don't allow if fixed limit reached
-			}
-			if (
-				selectionType === "range" &&
-				maxSelections &&
-				currentAnswers.length >= maxSelections
-			) {
-				return; // Don't allow if max limit reached
-			}
-			// Add the option if checked
-			newAnswers = [...currentAnswers, optionValue];
-		} else {
-			// Check minimum when unchecking
-			if (
-				selectionType === "fixed" &&
-				fixedSelections &&
-				currentAnswers.length <= fixedSelections
-			) {
-				return; // Don't allow unchecking if it would go below fixed requirement
-			}
-			if (selectionType === "range" && currentAnswers.length <= minSelections) {
-				return; // Don't allow unchecking if it would go below minimum
-			}
-			// Remove the option if unchecked
-			newAnswers = currentAnswers.filter(
-				(value: string) => value !== optionValue
-			);
-		}
-
-		setAnswer(formDataCurrent?.id!, "MULTI_SELECT_OPTION", newAnswers);
-	};
 
 	return (
 		<div className="flex flex-col gap-2">
@@ -185,60 +258,31 @@ function FormComponet({
 				<div style={{ color: formData.settings.descriptionColor }}>
 					{formDataCurrent.description}
 				</div>
-				{formDataCurrent.data.selectionType &&
-					formDataCurrent.data.selectionType !== "unlimited" && (
-						<div className="mt-2 text-sm text-gray-600">
-							{formDataCurrent.data.selectionType === "fixed" &&
-								formDataCurrent.data.fixedSelections && (
-									<>
-										Please select exactly {formDataCurrent.data.fixedSelections}{" "}
-										option(s)
-										{answerData?.length && (
-											<span className="ml-1">
-												({answerData.length}/
-												{formDataCurrent.data.fixedSelections} selected)
-											</span>
-										)}
-									</>
-								)}
-							{formDataCurrent.data.selectionType === "range" && (
-								<>
-									Select {formDataCurrent.data.minSelections || 0} to{" "}
-									{formDataCurrent.data.maxSelections || "unlimited"} option(s)
-									{answerData?.length && (
-										<span className="ml-1">
-											({answerData.length} selected)
-										</span>
-									)}
-								</>
-							)}
-						</div>
-					)}
-				<div className="mt-4 flex flex-col gap-3">
-					{formDataCurrent.data.options.map((option) => (
-						<label
-							key={option.id}
-							className="flex items-center gap-3 cursor-pointer"
-						>
-							<input
-								type="checkbox"
-								disabled={disabled}
-								checked={answerData?.includes(option.value) ?? false}
-								onChange={(e) =>
-									handleCheckboxChange(option.value, e.target.checked)
-								}
-								className="w-5 h-5 rounded border-2"
-								style={{
-									accentColor: formData.settings.answerColor,
-									borderColor: formData.settings.answerColor,
-								}}
-							/>
-							<span style={{ color: formData.settings.answerColor }}>
-								{option.label}
-							</span>
-						</label>
-					))}
-				</div>
+				{form && form.control ? (
+					<FormField
+						control={form.control}
+						name={formDataCurrent.id!}
+						render={({ field }) => (
+							<FormItem>
+								<FormControl>
+									<MultiSelectComponent
+										field={field}
+										disabled={disabled}
+										formData={formData}
+										formDataCurrent={formDataCurrent}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				) : (
+					<MultiSelectComponent
+						disabled={disabled}
+						formData={formData}
+						formDataCurrent={formDataCurrent}
+					/>
+				)}
 
 				<Button
 					disabled={isSubmitting}

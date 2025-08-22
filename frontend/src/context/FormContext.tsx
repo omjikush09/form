@@ -16,7 +16,7 @@ interface FormSettings {
 }
 
 // Form Data Interface
-interface FormData {
+export interface FormConfigData {
 	id: string;
 	title: string;
 	status: "PUBLISHED" | "DRAFT" | "CLOSED";
@@ -25,11 +25,11 @@ interface FormData {
 
 // Context Interface
 interface FormContextType {
-	formData: FormData;
+	formData: FormConfigData;
 	loading: boolean;
 	saving: boolean;
 	error: string | null;
-	updateFormData: (updates: Partial<FormData>) => void;
+	updateFormData: (updates: Partial<FormConfigData>) => void;
 	updateSettings: (settings: Partial<FormSettings>) => void;
 	fetchFormData: (formId: string) => Promise<void>;
 	saveFormData: () => Promise<void>;
@@ -48,7 +48,7 @@ const defaultSettings: FormSettings = {
 };
 
 // Default form data
-const defaultFormData: FormData = {
+const defaultFormData: FormConfigData = {
 	id: "",
 	title: "Untitled Form",
 	settings: defaultSettings,
@@ -61,11 +61,11 @@ const FormContext = createContext<FormContextType | undefined>(undefined);
 // Provider Component
 interface FormProviderProps {
 	children: ReactNode;
-	initialData?: Partial<FormData>;
+	initialData?: Partial<FormConfigData>;
 }
 
 export function FormProvider({ children, initialData }: FormProviderProps) {
-	const [formData, setFormData] = useState<FormData>({
+	const [formData, setFormData] = useState<FormConfigData>({
 		...defaultFormData,
 		...initialData,
 		settings: {
@@ -77,7 +77,7 @@ export function FormProvider({ children, initialData }: FormProviderProps) {
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const updateFormData = (updates: Partial<FormData>) => {
+	const updateFormData = (updates: Partial<FormConfigData>) => {
 		setFormData((prev) => ({
 			...prev,
 			...updates,
@@ -179,4 +179,4 @@ export function useFormContext() {
 }
 
 // Export types for external use
-export type { FormData, FormSettings, FormContextType };
+export type { FormSettings, FormContextType };

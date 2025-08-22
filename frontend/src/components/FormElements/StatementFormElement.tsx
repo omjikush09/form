@@ -1,24 +1,19 @@
 "use client";
 import React from "react";
-
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers } from "@/context/FormAnswerContext";
 import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { FormComponentProps } from "./types";
 
 function FormComponet({
 	selectedStep,
 	buttonOnClink = () => {},
-}: {
-	selectedStep: number;
-	disabled: boolean;
-	buttonOnClink?: () => void;
-}) {
+	isSubmitting,
+}: FormComponentProps) {
 	const { formStepData } = useFormStepData();
-	const { isSubmitting } = useFormAnswers();
 	const { formData } = useFormContext();
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep

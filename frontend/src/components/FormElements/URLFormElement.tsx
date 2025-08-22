@@ -1,30 +1,59 @@
 "use client";
 import React from "react";
 import { useFormStepData } from "@/context/FormStepDataContext";
-import { useFormAnswers, getAnswerFromQuesitonId } from "@/context/FormAnswerContext";
+import {
+	FormField,
+	FormItem,
+	FormControl,
+	FormMessage,
+} from "@/components/ui/form";
+type currentData = FormElementDataTypes["URL"];
+const URLInputComponent = ({
+	field,
+	disabled,
+	formData,
+	formDataCurrent,
+}: BaseFormElementComponentProps & { formDataCurrent: currentData }) => {
+	return (
+		<Input
+			{...field}
+			value={field?.value || ""}
+			type="url"
+			disabled={disabled}
+			style={
+				{
+					"--placeholder-color": formData.settings.answerColor,
+					color: formData.settings.answerColor,
+					borderColor: formData.settings.answerColor,
+				} as React.CSSProperties
+			}
+			placeholder={formDataCurrent.data.placeholder}
+			className="border-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] p-3 mb-4"
+		/>
+	);
+};
+import { useReactFormHookContext } from "@/context/reactHookFormContext";
 import { useFormContext } from "@/context/FormContext";
 import PropertiesSetting from "@/components/PropertiesSetting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { FormElementDataTypes } from "@/config/data";
+import { BaseFormElementComponentProps, FormComponentProps } from "./types";
 
 function FormComponet({
 	selectedStep,
 	disabled = false,
 	buttonOnClink = () => {},
-}: {
-	selectedStep: number;
-	disabled: boolean;
-	buttonOnClink?: () => void;
-}) {
+	isSubmitting,
+}: FormComponentProps) {
 	const { formStepData } = useFormStepData();
-	const { answers, setAnswer, isSubmitting } = useFormAnswers();
 	const { formData } = useFormContext();
+	const form = useReactFormHookContext();
 	const formDataCurrent = formStepData.find(
 		(data) => data.step == selectedStep
 	);
 	if (!formDataCurrent || formDataCurrent.type != "URL") return null;
-	const answerData = getAnswerFromQuesitonId(formDataCurrent.id!, "URL");
 
 	return (
 		<div className=" flex flex-col gap-2 ">
@@ -41,23 +70,31 @@ function FormComponet({
 				<div style={{ color: formData.settings.descriptionColor }}>
 					{formDataCurrent.description}
 				</div>
-				<input
-					type="url"
-					disabled={disabled}
-					style={
-						{
-							"--placeholder-color": formData.settings.answerColor,
-							color: formData.settings.answerColor,
-							borderColor: formData.settings.answerColor,
-						} as React.CSSProperties
-					}
-					placeholder={formDataCurrent.data.placeholder}
-					className="border-2 border-solid rounded border-gray-300 w-full focus:outline-none placeholder-[var(--placeholder-color)] p-3 mb-4"
-					value={answerData ?? ""}
-					onChange={(e) =>
-						setAnswer(formDataCurrent?.id!, "URL", e.target.value)
-					}
-				/>
+				{form && form.control ? (
+					<FormField
+						control={form.control}
+						name={formDataCurrent.id!}
+						render={({ field }) => (
+							<FormItem>
+								<FormControl>
+									<URLInputComponent
+										field={field}
+										disabled={disabled}
+										formData={formData}
+										formDataCurrent={formDataCurrent}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				) : (
+					<URLInputComponent
+						disabled={disabled}
+						formData={formData}
+						formDataCurrent={formDataCurrent}
+					/>
+				)}
 
 				<Button
 					disabled={isSubmitting}

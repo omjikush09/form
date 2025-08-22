@@ -2,6 +2,7 @@ import { ElementDefaultData, formTypes } from "@/config/data";
 import React, { useState } from "react";
 import {
 	Dialog,
+	DialogClose,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
@@ -66,14 +67,16 @@ function AddBlock({ formId }: { formId: string }) {
 									width={400}
 									height={300}
 								/>
-								<Button
-									className="cursor-pointer"
-									onClick={() => {
-										addElements(formId, selectedBlock);
-									}}
-								>
-									Use this block <ArrowRight />
-								</Button>
+								<DialogClose asChild>
+									<Button
+										className="cursor-pointer"
+										onClick={() => {
+											addElements(formId, selectedBlock);
+										}}
+									>
+										Use this block <ArrowRight />
+									</Button>
+								</DialogClose>
 							</div>
 						)}
 						{!selectedBlock && (

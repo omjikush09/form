@@ -67,9 +67,6 @@ export default function ElementContextProvider({
 		endStep.step = endStep?.step + 1;
 		setFormData([...exceptEnd, body, endStep]);
 
-		try {
-			// const data = api.post();
-		} catch (error) {}
 	};
 
 	const setElements = async (formId: string) => {

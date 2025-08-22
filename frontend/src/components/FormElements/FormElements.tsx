@@ -12,13 +12,10 @@ import NumberFormElement from "./NumberFormElement";
 import StatementFormElement from "./StatementFormElement";
 import URLFormElement from "./URLFormElement";
 import DropdownFormElement from "./DropdownFormElement";
+import { FormComponentProps } from "./types";
 
 export type FormElement = {
-	FormComponet: React.FC<{
-		selectedStep: number;
-		disabled: boolean;
-		buttonOnClink?: () => void;
-	}>;
+	FormComponet: React.FC<FormComponentProps>;
 	properTiesComponent: React.FC<{ selectedStep: number }>;
 };
 

@@ -104,7 +104,7 @@ function Build() {
 					</Tooltip>
 					<Tooltip>
 						<TooltipTrigger
-							className="flex gap-2 items-center bg-black rounded text-white  px-4"
+							className="flex gap-2 items-center bg-black rounded text-white  px-4 cursor-pointer"
 							onClick={() => publishForm(formId)}
 						>
 							<IoRocketOutline color="white" /> <span>Publish</span>
@@ -143,7 +143,11 @@ function Build() {
 								if (selectedStep == undefined || !stepData?.type) return;
 								const Component = FormElement[stepData.type].FormComponet;
 								return (
-									<Component selectedStep={selectedStep} disabled={true} />
+									<Component
+										isSubmitting={false}
+										selectedStep={selectedStep}
+										disabled={true}
+									/>
 								);
 							})()}
 						</div>

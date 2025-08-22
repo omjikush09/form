@@ -46,7 +46,7 @@ export type FormOption = {
 
 export type inputValues = "text" | "email" | "tel" | "number";
 
-export type FormField = {
+export type FormFieldData = {
 	id: string;
 	title: string;
 	type: inputValues;
@@ -103,11 +103,11 @@ export type MultiSelectDataType = {
 };
 
 type ContactInfoDataType = {
-	fields: FormField[];
+	fields: FormFieldData[];
 };
 
 type AddressDataType = {
-	fields: FormField[];
+	fields: FormFieldData[];
 };
 
 type StatementDataType = {
@@ -138,6 +138,9 @@ type FormDataByType = {
 	START_STEP: StartStepDataType;
 	END_STEP: EndStepDataType;
 };
+
+export type FormElementDataTypes = typeof FormDefaultData;
+
 export const FormDefaultData: {
 	[K in FormElementTypes]: {
 		id?: string;
