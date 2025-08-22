@@ -3,6 +3,8 @@ import { db } from "../../db/index.js";
 import { z } from "zod";
 import type {
 	FormSettingsSchema,
+	PublishFormBodySchema,
+	SubmitFormResponseBodySchema,
 	UpdateFormBodySchema,
 } from "./form.schema.js";
 export const createFormService = async (
@@ -107,16 +109,7 @@ export const getFormQuestionsService = async (formId: string) => {
 
 export const publishFormWithQuestionsService = async (
 	formId: string,
-	questions?: Array<{
-		id?: string;
-		type: string;
-		title: string;
-		description: string;
-		data: any;
-		step: number;
-		required?: boolean;
-		buttonText?: string;
-	}>
+	questions: z.infer<typeof PublishFormBodySchema>["questions"]
 ) => {
 	return await db.transaction().execute(async (trx) => {
 		let questionResults = [];
@@ -184,7 +177,7 @@ export const publishFormWithQuestionsService = async (
 					.values(
 						questionsToCreate.map((question) => ({
 							form_id: formId,
-							type: question.type as any,
+							type: question.type,
 							title: question.title,
 							description: question.description,
 							data: JSON.stringify(question.data),
@@ -217,10 +210,7 @@ export const publishFormWithQuestionsService = async (
 
 export const submitFormResponseService = async (
 	formId: string,
-	answers: Array<{
-		form_question_id: string;
-		answer: any;
-	}>
+	answers: z.infer<typeof SubmitFormResponseBodySchema>["answers"]
 ) => {
 	return await db.transaction().execute(async (trx) => {
 		// Create the form response
@@ -233,7 +223,6 @@ export const submitFormResponseService = async (
 			.returningAll()
 			.executeTakeFirstOrThrow();
 
-		// Save the answers if any provided
 		if (answers.length > 0) {
 			const answerValues = answers.map((answer) => ({
 				form_response_id: formResponse.id,

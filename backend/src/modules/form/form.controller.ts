@@ -159,23 +159,7 @@ export const publishFormWithQuestions = async (
 		const { formId } = req.params;
 		const { questions } = req.body;
 
-		// Transform questions to match service expectations
-		const serviceQuestions = questions.map((q) => ({
-			...(q.id !== undefined && { id: q.id }),
-			type: q.type,
-			title: q.title || "",
-			description: q.description || "",
-			data: q.data,
-			step: q.step,
-			...(q.required !== undefined && { required: q.required }),
-			...(q.buttonText !== undefined &&
-				q.buttonText !== null && { buttonText: q.buttonText }),
-		}));
-
-		const result = await publishFormWithQuestionsService(
-			formId,
-			serviceQuestions
-		);
+		const result = await publishFormWithQuestionsService(formId, questions);
 		res.json({
 			data: result,
 			message: "Form published successfully with questions",
@@ -204,7 +188,7 @@ export const submitFormResponse = async (
 			data: response,
 			message: "Form response submitted successfully",
 		});
-	} catch (error: any) {
+	} catch (error: unknown) {
 		res.status(500).json({
 			error: error instanceof Error ? error.message : "Unknown error occurred",
 		});

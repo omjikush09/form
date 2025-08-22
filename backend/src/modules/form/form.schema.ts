@@ -111,9 +111,9 @@ export const endStepDataSchema = z.object({});
 const BaseQuestionSchema = z.object({
 	id: z.string().optional(),
 	step: z.number(),
-	title: z.string().optional(),
-	description: z.string().optional(),
-	required: z.boolean().optional(),
+	title: z.string(),
+	description: z.string(),
+	required: z.boolean(),
 	buttonText: z.string().nullable().optional(),
 });
 

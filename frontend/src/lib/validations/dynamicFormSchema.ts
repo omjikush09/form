@@ -3,7 +3,7 @@ import { FormElementConfig } from "@/context/FormStepDataContext";
 
 // Create dynamic form schema based on form step data
 export const createDynamicFormSchema = (formStepData: FormElementConfig[]) => {
-	const schemaFields: Record<string, z.ZodType<any>> = {};
+	const schemaFields: Record<string, z.ZodType> = {};
 
 	// Filter out START_STEP and END_STEP
 	const validatableSteps = formStepData.filter(
@@ -34,7 +34,7 @@ export const createDynamicFormSchema = (formStepData: FormElementConfig[]) => {
 						(data) => {
 							const errors: string[] = [];
 
-							step.data.fields.forEach((field: any) => {
+							step.data.fields.forEach((field) => {
 								const fieldData = data[field.id];
 								const fieldValue = fieldData?.value || "";
 
