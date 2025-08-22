@@ -180,14 +180,24 @@ function FormPage() {
 					const response = error.response!;
 
 					if (response.data.error && response.data.validationErrors) {
-						response.data.validationErrors.forEach((err: any) => {
-							toast.error(err.field, err.message);
+						response.data.validationErrors.forEach((err: unknown) => {
+							if (err && typeof err === "object" && err !== null) {
+								const errorObj = err as Record<string, unknown>;
+								if ("field" in errorObj && "message" in errorObj) {
+									const field = errorObj.field;
+									const message = errorObj.message;
+									if (typeof field === "string" && typeof message === "string") {
+										toast.error(`${field}: ${message}`);
+									}
+								}
+							}
 						});
 					} else {
 						toast.error("Failed to submit form");
 					}
 				} else {
 					toast.error("Failed to submit form");
+					
 				}
 				return;
 			} finally {

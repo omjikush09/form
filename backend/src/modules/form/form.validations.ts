@@ -7,6 +7,7 @@ import {
 	numberDataSchema,
 	longTextDataSchema,
 	FieldAnswerSchema,
+	SubmitFormResponseBodySchema,
 } from "./form.schema.js";
 
 // Validation error type
@@ -17,8 +18,12 @@ export interface ValidationError {
 	questionId: string;
 }
 
-// Use schemas from form.schema.ts instead of duplicating them
-// Basic answer validation schemas
+// Import types from schema instead of redefining
+export type ContactInfoAnswer = z.infer<typeof FieldAnswerSchema>;
+export type FormSubmissionAnswer = z.infer<typeof SubmitFormResponseBodySchema>['answers'][0];
+export type FormAnswer = FormSubmissionAnswer['answer'] | null | undefined;
+
+// Basic answer validation schemas - these are for runtime validation, not data structure
 const multiSelectSchema = z.array(z.string());
 const numberSchema = z.union([
 	z.number(),
@@ -26,18 +31,17 @@ const numberSchema = z.union([
 ]);
 const textSchema = z.string();
 
-// Simple contact info answer schema for existing validation logic
 
 // Helper function to convert Zod errors to ValidationError format
 const formatZodErrors = (
-	zodErrors: any[],
+	zodIssues: z.core.$ZodIssue[],
 	questionId: string,
 	fieldPrefix = "general"
 ): ValidationError[] => {
-	return zodErrors.map((error) => ({
+	return zodIssues.map((issue) => ({
 		field:
-			error.path && error.path.length > 0 ? error.path.join(".") : fieldPrefix,
-		message: error.message,
+			issue.path && issue.path.length > 0 ? issue.path.join(".") : fieldPrefix,
+		message: issue.message,
 		questionId,
 	}));
 };
@@ -45,7 +49,7 @@ const formatZodErrors = (
 // Validate a single question's answer using Zod schemas
 export const validateQuestionAnswer = (
 	question: Selectable<Form_Questions>,
-	answer: any
+	answer: FormAnswer
 ): ValidationError[] => {
 	const errors: ValidationError[] = [];
 	const questionId = question.id;
@@ -73,12 +77,31 @@ export const validateQuestionAnswer = (
 	if (isEmpty) {
 		return errors;
 	}
-	let questionData: Selectable<Form_Questions>;
+	let questionData: Record<string, unknown>;
 
-	questionData =
-		typeof question.data === "string"
-			? JSON.parse(question.data)
-			: question.data || {};
+	try {
+		if (typeof question.data === "string") {
+			questionData = JSON.parse(question.data);
+		} else if (
+			question.data &&
+			typeof question.data === "object" &&
+			!Array.isArray(question.data)
+		) {
+			// Safely convert object to Record<string, unknown>
+			questionData = Object.fromEntries(
+				Object.entries(question.data).map(([key, value]) => [key, value])
+			);
+		} else {
+			questionData = {};
+		}
+	} catch (parseError) {
+		errors.push({
+			field: question.title || "general",
+			message: "Invalid question data format",
+			questionId,
+		});
+		return errors;
+	}
 
 	// Type-specific validations using Zod
 	switch (question.type) {
@@ -377,10 +400,7 @@ export const validateQuestionAnswer = (
 // Validate all form responses
 export const validateFormResponses = (
 	formQuestions: Selectable<Form_Questions>[],
-	answers: Array<{
-		form_question_id: string;
-		answer: any;
-	}>
+	answers: FormSubmissionAnswer[]
 ): ValidationError[] => {
 	const allValidationErrors: ValidationError[] = [];
 
@@ -391,14 +411,15 @@ export const validateFormResponses = (
 		);
 
 		// Parse the answer or use null if not provided
-		let answerValue = null;
+		let answerValue: FormAnswer = null;
 		if (submittedAnswer) {
 			try {
 				// If answer is already an object, use it directly
-				answerValue =
-					typeof submittedAnswer.answer === "string"
-						? JSON.parse(submittedAnswer.answer)
-						: submittedAnswer.answer;
+				if (typeof submittedAnswer.answer === "string") {
+					answerValue = JSON.parse(submittedAnswer.answer);
+				} else {
+					answerValue = submittedAnswer.answer;
+				}
 			} catch {
 				answerValue = submittedAnswer.answer;
 			}
